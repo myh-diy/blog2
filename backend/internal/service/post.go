@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"gorm.io/gorm"
@@ -13,16 +14,25 @@ import (
 // CreatePost creates a new post from parsed Markdown, associates tags, and
 // syncs the FTS index. Returns the created post or an error.
 func CreatePost(db *gorm.DB, result *parser.ParseResult, rawMD string) (*model.Post, error) {
-	// Resolve slug collisions
+	// Resolve slug collisions by trying incrementing suffixes until unique
 	slug := result.Slug
-	var count int64
-	db.Model(&model.Post{}).Where("slug = ?", slug).Count(&count)
-	if count > 0 {
-		slug = fmt.Sprintf("%s-%d", slug, count+1)
+	base := slug
+	for i := 1; ; i++ {
+		var count int64
+		db.Model(&model.Post{}).Where("slug = ?", slug).Count(&count)
+		if count == 0 {
+			break
+		}
+		slug = fmt.Sprintf("%s-%d", base, i+1)
 	}
 
-	// Parse date
-	parsedDate, _ := parseDate(result.Date)
+	// Parse date, fall back to time.Now() if malformed
+	parsedDate, err := parseDate(result.Date)
+	if err != nil {
+		parsedDate = time.Now()
+		log.Printf("WARNING: invalid date format '%s', falling back to %s: %v",
+			result.Date, parsedDate.Format("2006-01-02"), err)
+	}
 
 	// Find or create tags
 	var tags []model.Tag
