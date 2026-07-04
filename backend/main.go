@@ -17,7 +17,7 @@ import (
 	"blog-backend/internal/service"
 )
 
-//go:embed frontend-dist/*
+//go:embed frontend-dist/* frontend-dist/**/*
 var staticFiles embed.FS
 
 func main() {

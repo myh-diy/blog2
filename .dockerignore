@@ -1,0 +1,12 @@
+node_modules
+frontend/dist
+backend/frontend-dist
+backend/blog-server
+backend/blog-server.exe
+backend/blog.db*
+backend/uploads/*
+.git
+.superpowers
+docs
+*.md
+!CLAUDE.md
