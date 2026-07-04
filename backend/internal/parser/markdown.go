@@ -38,7 +38,10 @@ func ParseMarkdown(mdContent []byte) (*ParseResult, error) {
 			meta.Meta,
 		),
 		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
-		goldmark.WithRendererOptions(html.WithHardWraps()),
+		goldmark.WithRendererOptions(
+				html.WithHardWraps(),
+				html.WithUnsafe(), // allow raw HTML like <img> tags
+			),
 	)
 
 	// Parse the AST once — share it for HTML rendering, meta extraction, and

@@ -42,6 +42,7 @@ func main() {
 	r.GET("/api/tags", handler.ListTags())
 	r.GET("/api/search", handler.SearchPosts())
 	r.GET("/api/timeline", handler.GetTimeline())
+	r.Static("/uploads", "./uploads")
 	r.GET("/api/quotes", handler.GetQuotes())
 
 	// Admin routes (protected)
@@ -49,6 +50,7 @@ func main() {
 	admin.Use(auth.AuthMiddleware(cfg.JWTSecret))
 	{
 		admin.POST("/upload", handler.UploadPost())
+		admin.POST("/upload-image", handler.UploadImage())
 		admin.PUT("/posts/:id", handler.UpdatePost())
 		admin.DELETE("/posts/:id", handler.DeletePost())
 		admin.GET("/quotes", handler.ListQuotes())

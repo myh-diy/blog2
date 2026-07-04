@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 	"unicode"
@@ -118,12 +121,14 @@ func UpdatePost(db *gorm.DB, id uint, updates map[string]interface{}) (*model.Po
 	return GetPostByID(db, id)
 }
 
-// DeletePost removes a post and its tag associations by primary key.
+// DeletePost removes a post, its tag associations, and its uploaded images.
 func DeletePost(db *gorm.DB, id uint) error {
 	var post model.Post
 	if err := db.First(&post, id).Error; err != nil {
 		return err
 	}
+	// Delete associated uploaded images
+	deletePostImages(post.ContentHTML)
 	// Clear tag associations then delete
 	db.Model(&post).Association("Tags").Clear()
 	return db.Unscoped().Delete(&post).Error
@@ -184,9 +189,40 @@ func parseDate(dateStr string) (time.Time, error) {
 	return time.Parse("2006-01-02", dateStr)
 }
 
+// UpdatePostTags replaces the tag associations for a post
+func UpdatePostTags(db *gorm.DB, postID uint, tagNames []string) error {
+	post, err := GetPostByID(db, postID)
+	if err != nil {
+		return err
+	}
+	// Clear existing tags
+	db.Model(post).Association("Tags").Clear()
+	// Set new tags
+	tags, err := EnsureTags(db, tagNames)
+	if err != nil {
+		return err
+	}
+	return db.Model(post).Association("Tags").Replace(tags)
+}
+
 func syncFTS(db *gorm.DB, postID uint, title, contentMD string) {
 	db.Exec("DELETE FROM posts_fts WHERE rowid = ?", postID)
 	db.Exec("INSERT INTO posts_fts(rowid, title, content_md) VALUES(?, ?, ?)", postID, title, contentMD)
+}
+
+// deletePostImages removes uploaded image files referenced in the post HTML.
+func deletePostImages(html string) {
+	re := regexp.MustCompile(`/uploads/([^")\s]+)`)
+	matches := re.FindAllStringSubmatch(html, -1)
+	for _, m := range matches {
+		if len(m) < 2 {
+			continue
+		}
+		path := filepath.Join("uploads", m[1])
+		if err := os.Remove(path); err != nil {
+			log.Printf("Failed to delete image %s: %v", path, err)
+		}
+	}
 }
 
 // GetRandomPostQuotes extracts random sentences from all posts' markdown content.

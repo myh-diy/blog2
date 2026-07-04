@@ -38,6 +38,22 @@ async function deletePost(id: number) {
   await api.delete(`/admin/posts/${id}`)
   posts.value = posts.value.filter(p => p.id !== id)
 }
+const editingPost = ref<Post | null>(null)
+const editTags = ref('')
+
+function startEdit(post: Post) {
+  editingPost.value = post
+  editTags.value = post.tags.map(t => t.name).join(', ')
+}
+async function saveEdit() {
+  if (!editingPost.value) return
+  const tags = editTags.value.split(',').map(t => t.trim()).filter(Boolean)
+  await api.put(`/admin/posts/${editingPost.value.id}`, { tags })
+  editingPost.value = null
+  await loadPosts()
+}
+function cancelEdit() { editingPost.value = null }
+
 function logout() { auth.logout(); router.push('/login') }
 </script>
 
@@ -80,14 +96,32 @@ function logout() { auth.logout(); router.push('/login') }
           <thead><tr class="border-b border-warm-200 dark:border-white/5 bg-warm-50 dark:bg-white/5">
             <th class="text-left py-3 px-4 font-semibold text-warm-500 dark:text-warm-400">Title</th>
             <th class="text-left py-3 px-4 font-semibold text-warm-500 dark:text-warm-400 w-28">Date</th>
-            <th class="text-right py-3 px-4 font-semibold text-warm-500 dark:text-warm-400 w-20">Actions</th>
+            <th class="text-right py-3 px-4 font-semibold text-warm-500 dark:text-warm-400 w-32">Actions</th>
           </tr></thead>
           <tbody class="divide-y divide-warm-100 dark:divide-white/5">
-            <tr v-for="post in posts" :key="post.id" class="hover:bg-warm-50 dark:hover:bg-white/5 transition-colors">
-              <td class="py-3 px-4"><router-link :to="`/post/${post.slug}`" class="font-medium text-warm-800 dark:text-warm-200 hover:text-brand-600 dark:hover:text-pop-400 transition-colors">{{ post.title }}</router-link></td>
-              <td class="py-3 px-4 text-warm-400 dark:text-warm-500 font-mono text-xs">{{ post.created_at.split('T')[0] }}</td>
-              <td class="py-3 px-4 text-right"><button @click="deletePost(post.id)" class="text-xs font-medium text-red-500 hover:text-red-600 transition-colors">Delete</button></td>
-            </tr>
+            <template v-for="post in posts" :key="post.id">
+              <tr class="hover:bg-warm-50 dark:hover:bg-white/5 transition-colors">
+                <td class="py-3 px-4"><router-link :to="`/post/${post.slug}`" class="font-medium text-warm-800 dark:text-warm-200 hover:text-brand-600 dark:hover:text-pop-400 transition-colors">{{ post.title }}</router-link></td>
+                <td class="py-3 px-4 text-warm-400 dark:text-warm-500 font-mono text-xs">{{ post.created_at.split('T')[0] }}</td>
+                <td class="py-3 px-4 text-right space-x-2">
+                  <button @click="startEdit(post)" class="text-xs font-medium text-brand-600 dark:text-pop-400 hover:underline transition-colors">Edit</button>
+                  <button @click="deletePost(post.id)" class="text-xs font-medium text-red-500 hover:text-red-600 transition-colors">Delete</button>
+                </td>
+              </tr>
+              <!-- Edit row -->
+              <tr v-if="editingPost?.id === post.id">
+                <td colspan="3" class="px-4 py-3 bg-warm-50 dark:bg-white/5">
+                  <div class="flex flex-col gap-2">
+                    <label class="text-xs font-semibold text-warm-500">Tags (comma separated)</label>
+                    <input v-model="editTags" class="w-full px-3 py-2 bg-white dark:bg-warm-800 border border-warm-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30" />
+                    <div class="flex gap-2">
+                      <button @click="saveEdit" class="px-3 py-1.5 text-xs font-medium bg-brand-500 text-white rounded-lg hover:bg-brand-600">Save</button>
+                      <button @click="cancelEdit" class="px-3 py-1.5 text-xs font-medium text-warm-500 hover:bg-warm-100 dark:hover:bg-white/10 rounded-lg">Cancel</button>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </template>
           </tbody>
         </table>
       </div>

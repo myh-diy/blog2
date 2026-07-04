@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -53,6 +54,21 @@ func UpdatePost() gin.HandlerFunc {
 		if err := c.ShouldBindJSON(&updates); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 			return
+		}
+		// Handle tags separately for many-to-many
+		if tagsRaw, ok := updates["tags"]; ok {
+			var tagNames []string
+			switch v := tagsRaw.(type) {
+			case []interface{}:
+				for _, t := range v {
+					tagNames = append(tagNames, fmt.Sprintf("%v", t))
+				}
+			}
+			delete(updates, "tags")
+			if err := service.UpdatePostTags(database.DB, uint(id), tagNames); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
 		}
 		post, err := service.UpdatePost(database.DB, uint(id), updates)
 		if err != nil {

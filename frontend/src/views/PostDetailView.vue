@@ -40,7 +40,8 @@ onMounted(async () => {
         prose-a:text-brand-600 dark:prose-a:text-pop-400 prose-a:no-underline hover:prose-a:underline
         prose-code:text-brand-700 dark:prose-code:text-pop-300
         prose-pre:bg-warm-900 dark:prose-pre:bg-[#0d0714] prose-pre:rounded-xl
-        prose-blockquote:border-brand-500 dark:prose-blockquote:border-pop-500">
+        prose-blockquote:border-brand-500 dark:prose-blockquote:border-pop-500
+        prose-img:rounded-xl prose-img:shadow-md prose-img:mx-auto prose-img:max-w-full">
         <MarkdownRenderer :html="post.content_html" />
       </div>
     </article>
