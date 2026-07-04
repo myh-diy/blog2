@@ -32,5 +32,8 @@ func Init(cfg config.Config) {
 	// Enable WAL mode for better concurrent read performance
 	DB.Exec("PRAGMA journal_mode=WAL")
 
+	// Initialize FTS5 full-text search index
+	InitFTS()
+
 	log.Println("Database initialized successfully")
 }
