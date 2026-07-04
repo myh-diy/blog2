@@ -5,3 +5,5 @@
 
 # Compiled binary
 blog-backend
+blog-server
+blog.db*
