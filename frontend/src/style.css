@@ -6,6 +6,10 @@
 
 @layer base {
   html { scroll-behavior: smooth; }
+  html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
   body {
     @apply bg-warm-50 text-warm-800 antialiased;
     @apply dark:bg-[#0d0714] dark:text-warm-200;
