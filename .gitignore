@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+frontend/dist/
+backend/frontend-dist/
+backend/blog-server
+backend/blog-server.exe
+
+# Database
+backend/blog.db
+backend/blog.db-shm
+backend/blog.db-wal
+
+# Uploaded files
+backend/uploads/*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SDD workspace artifacts
+.superpowers/sdd/
