@@ -20,6 +20,11 @@ const router = createRouter({
       component: () => import('../views/TimelineView.vue'),
     },
     {
+      path: '/posts',
+      name: 'posts',
+      component: () => import('../views/PostsView.vue'),
+    },
+    {
       path: '/tags',
       name: 'tags',
       component: () => import('../views/TagsView.vue'),

@@ -25,6 +25,7 @@ func Init(cfg config.Config) {
 		&model.User{},
 		&model.Post{},
 		&model.Tag{},
+			&model.Quote{},
 	); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}

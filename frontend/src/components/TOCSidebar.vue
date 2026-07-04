@@ -1,36 +1,26 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-
-interface TOCItem {
-  id: string
-  text: string
-  level: number
-  children: TOCItem[]
-}
-
+interface TOCItem { id: string; text: string; level: number; children: TOCItem[] }
 const props = defineProps<{ tocJson: string }>()
-const items = computed<TOCItem[]>(() => {
-  try { return JSON.parse(props.tocJson) || [] }
-  catch { return [] }
-})
+const items = computed<TOCItem[]>(() => { try { return JSON.parse(props.tocJson) || [] } catch { return [] } })
 </script>
 
 <template>
-  <nav v-if="items.length" class="sticky top-4">
-    <h3 class="font-semibold mb-2 text-sm text-gray-500">目录</h3>
-    <ul class="space-y-1 text-sm">
-      <li v-for="item in items" :key="item.id" :style="{ paddingLeft: (item.level - 1) * 12 + 'px' }">
-        <a :href="`#${item.id}`" class="hover:text-blue-500 text-gray-600 dark:text-gray-400">
+  <nav v-if="items.length">
+    <h3 class="text-xs font-semibold text-warm-400 dark:text-warm-500 uppercase tracking-wider mb-4">目录</h3>
+    <ul class="space-y-0.5 text-sm border-l-2 border-warm-200 dark:border-white/5">
+      <li v-for="item in items" :key="item.id">
+        <a :href="`#${item.id}`"
+          :style="{ paddingLeft: item.level * 12 + 'px' }"
+          class="block py-1.5 border-l-2 -ml-0.5 border-transparent text-warm-500 dark:text-warm-400 hover:text-brand-600 dark:hover:text-pop-400 hover:border-brand-500 dark:hover:border-pop-500 transition-colors">
           {{ item.text }}
         </a>
         <template v-if="item.children?.length">
-          <li v-for="child in item.children"
-            :key="child.id"
-            :style="{ paddingLeft: (child.level - 1) * 12 + 'px' }">
-            <a :href="`#${child.id}`" class="hover:text-blue-500 text-gray-500 dark:text-gray-500">
-              {{ child.text }}
-            </a>
-          </li>
+          <a v-for="child in item.children" :key="child.id" :href="`#${child.id}`"
+            :style="{ paddingLeft: child.level * 12 + 'px' }"
+            class="block py-1 text-xs border-l-2 -ml-0.5 border-transparent text-warm-400 dark:text-warm-500 hover:text-brand-600 dark:hover:text-pop-400 hover:border-brand-500 dark:hover:border-pop-500 transition-colors">
+            {{ child.text }}
+          </a>
         </template>
       </li>
     </ul>

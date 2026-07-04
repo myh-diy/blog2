@@ -1,25 +1,24 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import api from '../utils/api'
-
 const tags = ref<{ name: string; count: number }[]>([])
-
-onMounted(async () => {
-  const res = await api.get('/tags')
-  tags.value = res.data.tags
-})
+onMounted(async () => { const r = await api.get('/tags'); tags.value = r.data.tags })
 </script>
 
 <template>
   <div>
-    <h1 class="text-3xl font-bold mb-8">Tags</h1>
-    <div class="flex flex-wrap gap-3">
-      <router-link v-for="tag in tags" :key="tag.name" :to="`/?tag=${tag.name}`"
-        class="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-blue-500 hover:text-white transition">
-        {{ tag.name }}
-        <span class="ml-1 text-sm opacity-60">{{ tag.count }}</span>
+    <h1 class="text-4xl font-bold text-warm-800 dark:text-warm-100 mb-1">Tags</h1>
+    <p class="text-warm-400 dark:text-warm-500 mb-8 text-sm">{{ tags.length }} topics</p>
+    <div v-if="tags.length" class="flex flex-wrap gap-3">
+      <router-link v-for="t in tags" :key="t.name" :to="`/?tag=${t.name}`"
+        class="group inline-flex items-center gap-2 px-5 py-3 rounded-2xl
+               bg-white dark:bg-white/5 border border-warm-200 dark:border-white/5
+               hover:border-brand-300 dark:hover:border-pop-600
+               hover:shadow-lg hover:shadow-brand-500/5 dark:hover:shadow-pop-500/5 transition-all">
+        <span class="font-medium text-warm-700 dark:text-warm-200 group-hover:text-brand-600 dark:group-hover:text-pop-400 transition-colors">{{ t.name }}</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-warm-100 dark:bg-white/10 text-warm-500 dark:text-warm-400">{{ t.count }}</span>
       </router-link>
     </div>
-    <p v-if="tags.length === 0" class="text-gray-500 text-center py-12">No tags yet.</p>
+    <p v-else class="text-center py-20 text-warm-400">No tags yet.</p>
   </div>
 </template>

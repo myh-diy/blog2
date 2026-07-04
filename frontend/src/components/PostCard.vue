@@ -1,25 +1,23 @@
 <script setup lang="ts">
 import type { Post } from '../stores/posts'
-
 defineProps<{ post: Post }>()
 </script>
 
 <template>
-  <article class="py-6 border-b border-gray-200 dark:border-gray-700">
-    <time class="text-sm text-gray-500 dark:text-gray-400">
-      {{ new Date(post.created_at).toLocaleDateString('zh-CN') }}
-    </time>
-    <router-link :to="`/post/${post.slug}`">
-      <h2 class="text-xl font-semibold mt-1 hover:text-blue-500">{{ post.title }}</h2>
+  <article class="group py-7 border-b border-warm-200/60 dark:border-white/5 last:border-0">
+    <div class="flex items-center gap-3 text-sm text-warm-400 dark:text-warm-500 mb-3">
+      <time>{{ new Date(post.created_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }) }}</time>
+      <span aria-hidden="true">·</span>
+      <span>{{ post.tags.length }} tags</span>
+    </div>
+    <router-link :to="`/post/${post.slug}`" class="block">
+      <h2 class="text-2xl font-bold text-warm-800 dark:text-warm-100 group-hover:text-brand-600 dark:group-hover:text-pop-400 transition-colors mb-3 leading-tight">
+        {{ post.title }}
+      </h2>
     </router-link>
-    <div class="flex gap-2 mt-2">
-      <router-link
-        v-for="tag in post.tags"
-        :key="tag.id"
-        :to="`/?tag=${tag.name}`"
-        class="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded hover:bg-blue-100"
-      >
-        {{ tag.name }}
+    <div v-if="post.tags.length" class="flex gap-2 flex-wrap">
+      <router-link v-for="tag in post.tags" :key="tag.id" :to="`/?tag=${tag.name}`" class="tag-pill">
+        #{{ tag.name }}
       </router-link>
     </div>
   </article>

@@ -42,6 +42,7 @@ func main() {
 	r.GET("/api/tags", handler.ListTags())
 	r.GET("/api/search", handler.SearchPosts())
 	r.GET("/api/timeline", handler.GetTimeline())
+	r.GET("/api/quotes", handler.GetQuotes())
 
 	// Admin routes (protected)
 	admin := r.Group("/api/admin")
@@ -50,6 +51,9 @@ func main() {
 		admin.POST("/upload", handler.UploadPost())
 		admin.PUT("/posts/:id", handler.UpdatePost())
 		admin.DELETE("/posts/:id", handler.DeletePost())
+		admin.GET("/quotes", handler.ListQuotes())
+		admin.POST("/quotes", handler.CreateQuote())
+		admin.DELETE("/quotes/:id", handler.DeleteQuote())
 	}
 
 	// Serve SPA static files with fallback to index.html
@@ -58,26 +62,29 @@ func main() {
 		log.Fatalf("Failed to load frontend files: %v", err)
 	}
 
-	// Explicit root route to avoid Gin's 301 redirect
-	r.GET("/", func(c *gin.Context) {
-		c.FileFromFS("index.html", http.FS(frontendFS))
-	})
+	// Pre-read index.html for SPA fallback
+	indexHTML, err := fs.ReadFile(frontendFS, "index.html")
+	if err != nil {
+		log.Fatalf("Failed to read index.html: %v", err)
+	}
 
+	httpFS := http.FS(frontendFS)
+
+	// SPA routes: serve file if exists, otherwise serve index.html
 	r.NoRoute(func(c *gin.Context) {
 		path := c.Request.URL.Path
-		// Don't intercept API routes
 		if strings.HasPrefix(path, "/api/") {
 			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 			return
 		}
-		// Try to serve the requested file, fallback to index.html
-		f, err := frontendFS.Open(strings.TrimPrefix(path, "/"))
-		if err == nil {
-			f.Close()
-			c.FileFromFS(path, http.FS(frontendFS))
+		// Try to serve exact file
+		trimmedPath := strings.TrimPrefix(path, "/")
+		if _, err := frontendFS.Open(trimmedPath); err == nil {
+			c.FileFromFS(path, httpFS)
 			return
 		}
-		c.FileFromFS("index.html", http.FS(frontendFS))
+		// SPA fallback: send index.html with proper content type
+		c.Data(http.StatusOK, "text/html; charset=utf-8", indexHTML)
 	})
 
 	fmt.Println("Server starting on :" + cfg.Port)

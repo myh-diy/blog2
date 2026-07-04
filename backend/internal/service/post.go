@@ -3,7 +3,11 @@ package service
 import (
 	"fmt"
 	"log"
+	"math/rand"
+	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"gorm.io/gorm"
 
@@ -183,4 +187,71 @@ func parseDate(dateStr string) (time.Time, error) {
 func syncFTS(db *gorm.DB, postID uint, title, contentMD string) {
 	db.Exec("DELETE FROM posts_fts WHERE rowid = ?", postID)
 	db.Exec("INSERT INTO posts_fts(rowid, title, content_md) VALUES(?, ?, ?)", postID, title, contentMD)
+}
+
+// GetRandomPostQuotes extracts random sentences from all posts' markdown content.
+// Returns up to `limit` sentences (roughly 20-80 chars each).
+func GetRandomPostQuotes(db *gorm.DB, limit int) []string {
+	var posts []model.Post
+	if err := db.Select("content_md").Find(&posts).Error; err != nil || len(posts) == 0 {
+		return nil
+	}
+
+	var sentences []string
+	for _, p := range posts {
+		for _, s := range splitSentences(p.ContentMD) {
+			s = strings.TrimSpace(s)
+			// Filter: keep sentences between 10 and 120 chars, skip headings/code
+			runeCount := utf8.RuneCountInString(s)
+			if runeCount < 10 || runeCount > 120 {
+				continue
+			}
+			if strings.HasPrefix(s, "#") || strings.HasPrefix(s, "```") || strings.HasPrefix(s, "---") {
+				continue
+			}
+			sentences = append(sentences, s)
+		}
+	}
+
+	if len(sentences) == 0 {
+		return nil
+	}
+
+	// Shuffle and pick first `limit`
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	rng.Shuffle(len(sentences), func(i, j int) {
+		sentences[i], sentences[j] = sentences[j], sentences[i]
+	})
+
+	n := limit
+	if n > len(sentences) {
+		n = len(sentences)
+	}
+	return sentences[:n]
+}
+
+// splitSentences splits text into sentences by common delimiters.
+func splitSentences(text string) []string {
+	var result []string
+	current := strings.Builder{}
+	runes := []rune(text)
+
+	for i := 0; i < len(runes); i++ {
+		r := runes[i]
+		current.WriteRune(r)
+
+		// Split on sentence-ending punctuation followed by space/newline
+		if (r == '.' || r == '。' || r == '！' || r == '!' || r == '？' || r == '?' || r == '\n') &&
+			(i+1 >= len(runes) || unicode.IsSpace(runes[i+1]) || runes[i+1] == '\n') {
+			s := current.String()
+			if len(s) > 0 {
+				result = append(result, s)
+			}
+			current.Reset()
+		}
+	}
+	if current.Len() > 0 {
+		result = append(result, current.String())
+	}
+	return result
 }

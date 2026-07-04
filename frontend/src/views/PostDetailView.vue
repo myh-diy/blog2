@@ -15,23 +15,40 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="!post" class="text-center py-12 text-gray-500">Loading...</div>
-  <div v-else class="lg:grid lg:grid-cols-[1fr_200px] gap-8">
+  <div v-if="!post" class="flex justify-center py-20">
+    <div class="w-8 h-8 border-2 border-brand-500 dark:border-pop-500 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+
+  <div v-else class="lg:grid lg:grid-cols-[1fr_220px] gap-12">
     <article>
-      <h1 class="text-3xl font-bold mb-2">{{ post.title }}</h1>
-      <p class="text-gray-500 text-sm mb-4">
-        {{ new Date(post.created_at).toLocaleDateString('zh-CN') }}
-      </p>
-      <div class="flex gap-2 mb-8">
-        <router-link v-for="tag in post.tags" :key="tag.id" :to="`/?tag=${tag.name}`"
-          class="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded hover:bg-blue-100">
-          {{ tag.name }}
-        </router-link>
+      <router-link to="/" class="inline-flex items-center gap-1 text-sm text-warm-400 dark:text-warm-500 hover:text-brand-600 dark:hover:text-pop-400 mb-6 transition-colors">
+        &larr; Back to posts
+      </router-link>
+
+      <header class="mb-10">
+        <h1 class="text-4xl font-bold text-warm-800 dark:text-warm-100 leading-tight mb-4">{{ post.title }}</h1>
+        <time class="text-sm text-warm-400 dark:text-warm-500 mb-4 block">
+          {{ new Date(post.created_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }) }}
+        </time>
+        <div v-if="post.tags.length" class="flex gap-2 flex-wrap">
+          <router-link v-for="tag in post.tags" :key="tag.id" :to="`/?tag=${tag.name}`" class="tag-pill">#{{ tag.name }}</router-link>
+        </div>
+      </header>
+
+      <div class="prose prose-lg max-w-none
+        prose-headings:text-warm-800 dark:prose-headings:text-warm-100
+        prose-a:text-brand-600 dark:prose-a:text-pop-400 prose-a:no-underline hover:prose-a:underline
+        prose-code:text-brand-700 dark:prose-code:text-pop-300
+        prose-pre:bg-warm-900 dark:prose-pre:bg-[#0d0714] prose-pre:rounded-xl
+        prose-blockquote:border-brand-500 dark:prose-blockquote:border-pop-500">
+        <MarkdownRenderer :html="post.content_html" />
       </div>
-      <MarkdownRenderer :html="post.content_html" />
     </article>
+
     <aside class="hidden lg:block">
-      <TOCSidebar :toc-json="post.toc" />
+      <div class="sticky top-20">
+        <TOCSidebar :toc-json="post.toc" />
+      </div>
     </aside>
   </div>
 </template>
