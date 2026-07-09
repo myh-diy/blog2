@@ -4,7 +4,7 @@ import api from '../utils/api'
 import { usePostsStore } from '../stores/posts'
 import PostCard from '../components/PostCard.vue'
 import GradientButton from '../components/GradientButton.vue'
-import KawaiiIcon from '../components/KawaiiIcon.vue'
+import HeroCharacter from '../components/HeroCharacter.vue'
 import EmptyState from '../components/EmptyState.vue'
 
 const postStore = usePostsStore()
@@ -86,8 +86,8 @@ function animate() {
             </router-link>
           </div>
         </div>
-        <div class="w-40 h-40 md:w-56 md:h-56 shrink-0">
-          <KawaiiIcon name="wave" />
+        <div class="w-48 h-48 md:w-72 md:h-72 shrink-0">
+          <HeroCharacter />
         </div>
       </div>
     </section>

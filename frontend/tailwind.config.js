@@ -1,5 +1,9 @@
 import typography from '@tailwindcss/typography'
 
+function cssVarColor(name) {
+  return `rgb(var(${name}) / <alpha-value>)`
+}
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -10,31 +14,29 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Fresh green — SpringNote style primary
         brand: {
-          50:  '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
+          50:  cssVarColor('--brand-50'),
+          100: cssVarColor('--brand-100'),
+          200: cssVarColor('--brand-200'),
+          300: cssVarColor('--brand-300'),
+          400: cssVarColor('--brand-400'),
+          500: cssVarColor('--brand-500'),
+          600: cssVarColor('--brand-600'),
+          700: cssVarColor('--brand-700'),
+          800: cssVarColor('--brand-800'),
+          900: cssVarColor('--brand-900'),
         },
-        // Mint/teal accent
         accent: {
-          50:  '#f0fdfa',
-          100: '#ccfbf1',
-          200: '#99f6e4',
-          300: '#5eead4',
-          400: '#2dd4bf',
-          500: '#14b8a6',
-          600: '#0d9488',
-          700: '#0f766e',
-          800: '#115e59',
-          900: '#134e4a',
+          50:  cssVarColor('--accent-50'),
+          100: cssVarColor('--accent-100'),
+          200: cssVarColor('--accent-200'),
+          300: cssVarColor('--accent-300'),
+          400: cssVarColor('--accent-400'),
+          500: cssVarColor('--accent-500'),
+          600: cssVarColor('--accent-600'),
+          700: cssVarColor('--accent-700'),
+          800: cssVarColor('--accent-800'),
+          900: cssVarColor('--accent-900'),
         },
         // Warm neutrals (keep for compatibility)
         warm: {
