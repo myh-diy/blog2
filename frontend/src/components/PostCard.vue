@@ -7,9 +7,18 @@ defineProps<{ post: Post }>()
   <article class="group flex flex-col h-full bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-white/5
                    shadow-sm hover:shadow-xl hover:shadow-brand-500/10
                    hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-    <!-- Cover placeholder -->
-    <div class="h-36 bg-gradient-to-br from-brand-100 to-accent-100 dark:from-brand-900/30 dark:to-accent-900/30 relative overflow-hidden">
+    <!-- Cover -->
+    <div class="h-36 bg-gradient-to-br from-brand-100 to-accent-100 dark:from-brand-900/30 dark:to-accent-900/30 relative overflow-hidden flex items-center justify-center">
       <div class="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.6)_1px,transparent_0)] bg-[length:20px_20px]"></div>
+      <!-- Tag badge or title initial -->
+      <div class="relative z-10 flex flex-col items-center gap-2">
+        <div v-if="post.tags.length" class="px-4 py-1.5 rounded-full bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm text-brand-600 dark:text-brand-300 font-bold text-sm shadow-sm">
+          #{{ post.tags[0].name }}
+        </div>
+        <div v-else class="w-14 h-14 rounded-2xl bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm flex items-center justify-center text-2xl font-black text-brand-500 shadow-sm">
+          {{ post.title.charAt(0).toUpperCase() }}
+        </div>
+      </div>
     </div>
 
     <div class="flex flex-col flex-1 p-5">

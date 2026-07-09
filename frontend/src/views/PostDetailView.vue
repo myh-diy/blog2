@@ -19,8 +19,15 @@ onMounted(async () => {
     <div class="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
   </div>
 
-  <div v-else class="flex flex-col lg:flex-row gap-8">
-    <article class="flex-1 min-w-0">
+  <div v-else class="relative">
+    <!-- Floating TOC (desktop) -->
+    <aside class="hidden xl:block fixed right-6 top-28 w-64 z-40">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-lg max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-thin">
+        <TOCSidebar :toc-json="post.toc" />
+      </div>
+    </aside>
+
+    <article class="max-w-3xl mx-auto xl:mr-72 xl:ml-0">
       <router-link to="/posts" class="inline-flex items-center gap-1 text-sm text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 mb-6 transition-colors">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
         Back to posts
@@ -48,11 +55,5 @@ onMounted(async () => {
         </div>
       </div>
     </article>
-
-    <aside class="hidden lg:block lg:w-64 shrink-0">
-      <div class="sticky top-24 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
-        <TOCSidebar :toc-json="post.toc" />
-      </div>
-    </aside>
   </div>
 </template>

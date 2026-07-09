@@ -100,6 +100,7 @@ function logout() { auth.logout(); router.push('/login') }
         <table class="w-full text-sm">
           <thead><tr class="border-b border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-white/5">
             <th class="text-left py-3 px-4 font-semibold text-slate-500 dark:text-slate-400">Title</th>
+            <th class="text-left py-3 px-4 font-semibold text-slate-500 dark:text-slate-400 w-40">MD File</th>
             <th class="text-left py-3 px-4 font-semibold text-slate-500 dark:text-slate-400 w-28">Date</th>
             <th class="text-right py-3 px-4 font-semibold text-slate-500 dark:text-slate-400 w-32">Actions</th>
           </tr></thead>
@@ -107,6 +108,7 @@ function logout() { auth.logout(); router.push('/login') }
             <template v-for="post in posts" :key="post.id">
               <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                 <td class="py-3 px-4"><router-link :to="`/post/${post.slug}`" class="font-medium text-slate-800 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">{{ post.title }}</router-link></td>
+                <td class="py-3 px-4 text-slate-400 dark:text-slate-500 font-mono text-xs">{{ post.source_file || '-' }}</td>
                 <td class="py-3 px-4 text-slate-400 dark:text-slate-500 font-mono text-xs">{{ post.created_at.split('T')[0] }}</td>
                 <td class="py-3 px-4 text-right space-x-2">
                   <button @click="startEdit(post)" class="text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline transition-colors">Edit</button>
@@ -115,7 +117,7 @@ function logout() { auth.logout(); router.push('/login') }
               </tr>
               <!-- Edit row -->
               <tr v-if="editingPost?.id === post.id">
-                <td colspan="3" class="px-4 py-3 bg-gray-50 dark:bg-white/5">
+                <td colspan="4" class="px-4 py-3 bg-gray-50 dark:bg-white/5">
                   <div class="flex flex-col gap-2">
                     <label class="text-xs font-semibold text-slate-500">Tags (comma separated)</label>
                     <input v-model="editTags" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30" />

@@ -90,7 +90,7 @@ func UploadPost() gin.HandlerFunc {
 			return
 		}
 
-		post, err := service.CreatePost(database.DB, result, mdStr)
+		post, err := service.CreatePost(database.DB, result, mdStr, mdFile.Filename)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create post: " + err.Error()})
 			return

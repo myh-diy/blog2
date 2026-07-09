@@ -20,7 +20,7 @@ import (
 
 // CreatePost creates a new post from parsed Markdown, associates tags, and
 // syncs the FTS index. Returns the created post or an error.
-func CreatePost(db *gorm.DB, result *parser.ParseResult, rawMD string) (*model.Post, error) {
+func CreatePost(db *gorm.DB, result *parser.ParseResult, rawMD, sourceFile string) (*model.Post, error) {
 	// Resolve slug collisions by trying incrementing suffixes until unique
 	slug := result.Slug
 	base := slug
@@ -52,6 +52,7 @@ func CreatePost(db *gorm.DB, result *parser.ParseResult, rawMD string) (*model.P
 	post := &model.Post{
 		Title:       result.Title,
 		Slug:        slug,
+		SourceFile:  sourceFile,
 		ContentMD:   rawMD,
 		ContentHTML: result.HTML,
 		TOCJSON:     result.TOCJSON,
