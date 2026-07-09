@@ -2,8 +2,12 @@
 import { useRoute } from 'vue-router'
 import ThemeToggle from '../components/ThemeToggle.vue'
 import ThemePreset from '../components/ThemePreset.vue'
+import PageDecorations from '../components/PageDecorations.vue'
+import SillyTavernLink from '../components/SillyTavernLink.vue'
+import { useBackgroundImage } from '../composables/useBackgroundImage'
 
 const route = useRoute()
+const { backgroundImage } = useBackgroundImage()
 
 const navLinks = [
   { to: '/posts', label: 'Posts' },
@@ -15,6 +19,14 @@ const navLinks = [
 
 <template>
   <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-950">
+    <!-- Global background image layer -->
+    <div
+      class="fixed inset-0 z-[-1] bg-cover bg-center bg-fixed bg-no-repeat transition-all duration-700"
+      :style="{ backgroundImage: backgroundImage ? `var(--bg-image)` : 'none' }"
+      aria-hidden="true"
+    >
+      <div class="absolute inset-0 bg-white/80 dark:bg-slate-950/85 backdrop-blur-[2px] transition-colors"></div>
+    </div>
     <!-- Navbar -->
     <header class="sticky top-0 z-50 backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 border-b border-gray-200 dark:border-white/5">
       <nav class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -43,9 +55,12 @@ const navLinks = [
       </nav>
     </header>
 
-    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-10">
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-10 relative">
+      <PageDecorations />
       <slot />
     </main>
+
+    <SillyTavernLink />
 
     <footer class="border-t border-gray-200 dark:border-white/5">
       <div class="max-w-6xl mx-auto px-4 py-8">

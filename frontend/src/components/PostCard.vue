@@ -9,9 +9,10 @@ defineProps<{ post: Post }>()
                    hover:-translate-y-1 transition-all duration-300 overflow-hidden">
     <!-- Cover -->
     <div class="h-36 bg-brand-100 dark:bg-brand-900/30 relative overflow-hidden flex items-center justify-center">
-      <div class="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.6)_1px,transparent_0)] bg-[length:20px_20px]"></div>
+      <img v-if="post.cover_image" :src="post.cover_image" :alt="post.title" class="absolute inset-0 w-full h-full object-cover" />
+      <div v-if="!post.cover_image" class="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.6)_1px,transparent_0)] bg-[length:20px_20px]"></div>
       <!-- Tag badge or title initial -->
-      <div class="relative z-10 flex flex-col items-center gap-2">
+      <div v-if="!post.cover_image" class="relative z-10 flex flex-col items-center gap-2">
         <div v-if="post.tags.length" class="px-4 py-1.5 rounded-full bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm text-brand-600 dark:text-brand-300 font-bold text-sm shadow-sm">
           #{{ post.tags[0].name }}
         </div>

@@ -19,15 +19,8 @@ onMounted(async () => {
     <div class="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
   </div>
 
-  <div v-else class="relative">
-    <!-- Floating TOC (desktop) -->
-    <aside class="hidden xl:block fixed right-6 top-28 w-64 z-40">
-      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-lg max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-thin">
-        <TOCSidebar :toc-json="post.toc" />
-      </div>
-    </aside>
-
-    <article class="max-w-3xl mx-auto xl:mr-72 xl:ml-0">
+  <div v-else class="relative max-w-6xl mx-auto">
+    <article class="max-w-3xl mx-auto xl:mx-0">
       <router-link to="/posts" class="inline-flex items-center gap-1 text-sm text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 mb-6 transition-colors">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
         Back to posts
@@ -35,6 +28,7 @@ onMounted(async () => {
 
       <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-white/5 p-6 md:p-10 shadow-sm mb-8">
         <header class="mb-8">
+          <img v-if="post.cover_image" :src="post.cover_image" :alt="post.title" class="w-full h-auto rounded-xl mb-6 object-cover max-h-80" />
           <h1 class="text-3xl md:text-4xl font-black text-slate-800 dark:text-slate-100 leading-tight mb-4">{{ post.title }}</h1>
           <time class="text-sm text-slate-400 dark:text-slate-500 mb-4 block">
             {{ new Date(post.created_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }) }}
@@ -55,5 +49,12 @@ onMounted(async () => {
         </div>
       </div>
     </article>
+
+    <!-- Sticky TOC beside the article (desktop) -->
+    <aside class="hidden xl:block w-56 shrink-0 sticky top-24 self-start z-40">
+      <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-lg max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-thin">
+        <TOCSidebar :toc-json="post.toc" />
+      </div>
+    </aside>
   </div>
 </template>

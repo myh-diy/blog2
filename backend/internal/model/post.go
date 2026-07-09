@@ -7,6 +7,7 @@ type Post struct {
 	Title       string    `gorm:"size:500;not null" json:"title"`
 	Slug        string    `gorm:"uniqueIndex;size:500;not null" json:"slug"`
 	SourceFile  string    `gorm:"size:500" json:"source_file"`
+	CoverImage  string    `gorm:"size:1000" json:"cover_image"`
 	ContentMD   string    `gorm:"type:text;not null" json:"-"`
 	ContentHTML string    `gorm:"type:text;not null" json:"content_html"`
 	TOCJSON     string    `gorm:"type:text" json:"toc"`

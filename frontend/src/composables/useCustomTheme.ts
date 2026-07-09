@@ -8,23 +8,24 @@ export interface ThemePreset {
 }
 
 export const presets: ThemePreset[] = [
-  { name: 'Spring', brand: '#22c55e', accent: '#14b8a6' },
   { name: 'Sakura', brand: '#fb7299', accent: '#f472b6' },
+  { name: 'Spring', brand: '#22c55e', accent: '#14b8a6' },
   { name: 'Sky',    brand: '#3b82f6', accent: '#06b6d4' },
   { name: 'Lavender', brand: '#8b5cf6', accent: '#a855f7' },
 ]
 
 const STORAGE_KEY = 'theme-preset'
+const DEFAULT_PRESET = 'Sakura'
 
 function findPreset(name: string): ThemePreset {
-  return presets.find(p => p.name === name) || presets[0]
+  return presets.find(p => p.name === name) || presets.find(p => p.name === DEFAULT_PRESET)!
 }
 
 function loadPresetName(): string {
   try {
-    return localStorage.getItem(STORAGE_KEY) || 'Spring'
+    return localStorage.getItem(STORAGE_KEY) || DEFAULT_PRESET
   } catch {}
-  return 'Spring'
+  return DEFAULT_PRESET
 }
 
 const activePreset = ref<string>(loadPresetName())

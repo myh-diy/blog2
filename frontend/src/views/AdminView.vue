@@ -5,10 +5,14 @@ import { useAuthStore } from '../stores/auth'
 import api from '../utils/api'
 import UploadZone from '../components/UploadZone.vue'
 import GradientButton from '../components/GradientButton.vue'
+import { useBackgroundImage } from '../composables/useBackgroundImage'
+import { useSiteAvatar } from '../composables/useSiteAvatar'
 import type { Post } from '../stores/posts'
 
 const router = useRouter()
 const auth = useAuthStore()
+const { backgroundImage, setBackground, clearBackground } = useBackgroundImage()
+const { siteAvatar, isDefaultAvatar, setSiteAvatar, resetSiteAvatar } = useSiteAvatar()
 const posts = ref<Post[]>([])
 const loading = ref(true)
 const quotes = ref<{ id: number; text: string; created_at: string }[]>([])
@@ -41,21 +45,90 @@ async function deletePost(id: number) {
 }
 const editingPost = ref<Post | null>(null)
 const editTags = ref('')
+const editTitle = ref('')
+const editCoverFile = ref<File | null>(null)
 
 function startEdit(post: Post) {
   editingPost.value = post
   editTags.value = post.tags.map(t => t.name).join(', ')
+  editTitle.value = post.title
+  editCoverFile.value = null
+}
+function onEditCoverChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  if (target.files && target.files.length > 0) {
+    editCoverFile.value = target.files[0]
+  }
 }
 async function saveEdit() {
   if (!editingPost.value) return
   const tags = editTags.value.split(',').map(t => t.trim()).filter(Boolean)
-  await api.put(`/admin/posts/${editingPost.value.id}`, { tags })
+  const form = new FormData()
+  form.append('title', editTitle.value.trim())
+  tags.forEach(t => form.append('tags[]', t))
+  if (editCoverFile.value) form.append('cover_image', editCoverFile.value)
+  await api.put(`/admin/posts/${editingPost.value.id}`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
   editingPost.value = null
+  editCoverFile.value = null
   await loadPosts()
 }
 function cancelEdit() { editingPost.value = null }
 
 function logout() { auth.logout(); router.push('/login') }
+
+const bgFile = ref<File | null>(null)
+const bgUploading = ref(false)
+
+function onBgFileChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  if (target.files && target.files.length > 0) {
+    bgFile.value = target.files[0]
+  }
+}
+
+async function uploadBackground() {
+  if (!bgFile.value) return
+  bgUploading.value = true
+  try {
+    const form = new FormData()
+    form.append('image', bgFile.value)
+    const res = await api.post('/admin/upload-image', form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    setBackground(res.data.url)
+    bgFile.value = null
+  } finally {
+    bgUploading.value = false
+  }
+}
+
+const avatarFile = ref<File | null>(null)
+const avatarUploading = ref(false)
+
+function onAvatarFileChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  if (target.files && target.files.length > 0) {
+    avatarFile.value = target.files[0]
+  }
+}
+
+async function uploadAvatar() {
+  if (!avatarFile.value) return
+  avatarUploading.value = true
+  try {
+    const form = new FormData()
+    form.append('image', avatarFile.value)
+    const res = await api.post('/admin/upload-image', form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    setSiteAvatar(res.data.url)
+    avatarFile.value = null
+  } finally {
+    avatarUploading.value = false
+  }
+}
 </script>
 
 <template>
@@ -72,6 +145,61 @@ function logout() { auth.logout(); router.push('/login') }
     <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm mb-10">
       <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">Upload Post</h2>
       <UploadZone @uploaded="loadPosts" />
+    </div>
+
+    <!-- Global Background -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm mb-10">
+      <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">Global Background</h2>
+      <p class="text-sm text-slate-400 dark:text-slate-500 mb-4">Upload an image to use as the site-wide background.</p>
+      <div class="flex flex-col md:flex-row md:items-start gap-5">
+        <div class="flex-1">
+          <input type="file" accept="image/*" @change="onBgFileChange"
+            class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-3 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-brand-50 file:text-brand-600 file:font-medium file:cursor-pointer" />
+          <div class="flex gap-2 mt-3">
+            <button @click="uploadBackground" :disabled="!bgFile || bgUploading"
+              class="px-4 py-2 text-xs font-medium bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+              {{ bgUploading ? 'Uploading...' : 'Apply Background' }}
+            </button>
+            <button v-if="backgroundImage" @click="clearBackground"
+              class="px-4 py-2 text-xs font-medium text-slate-500 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors">
+              Clear
+            </button>
+          </div>
+        </div>
+        <div v-if="backgroundImage"
+          class="w-full md:w-48 h-28 rounded-xl border border-gray-200 dark:border-white/10 overflow-hidden bg-gray-100 dark:bg-slate-800 bg-cover bg-center"
+          :style="{ backgroundImage: `url(${backgroundImage})` }">
+        </div>
+        <div v-else
+          class="w-full md:w-48 h-28 rounded-xl border border-dashed border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-slate-800 flex items-center justify-center text-xs text-slate-400">
+          No background set
+        </div>
+      </div>
+    </div>
+
+    <!-- Site Avatar -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm mb-10">
+      <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">Site Avatar</h2>
+      <p class="text-sm text-slate-400 dark:text-slate-500 mb-4">Upload a large round avatar for the right-side decoration. Default is the Go gopher.</p>
+      <div class="flex flex-col md:flex-row md:items-center gap-5">
+        <div class="flex-1">
+          <input type="file" accept="image/*" @change="onAvatarFileChange"
+            class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-3 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-brand-50 file:text-brand-600 file:font-medium file:cursor-pointer" />
+          <div class="flex gap-2 mt-3">
+            <button @click="uploadAvatar" :disabled="!avatarFile || avatarUploading"
+              class="px-4 py-2 text-xs font-medium bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+              {{ avatarUploading ? 'Uploading...' : 'Apply Avatar' }}
+            </button>
+            <button v-if="!isDefaultAvatar" @click="resetSiteAvatar"
+              class="px-4 py-2 text-xs font-medium text-slate-500 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors">
+              Reset to Gopher
+            </button>
+          </div>
+        </div>
+        <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-white dark:border-slate-800 shadow-md bg-gray-100 dark:bg-slate-800 flex-shrink-0">
+          <img :src="siteAvatar" alt="site avatar preview" class="w-full h-full object-cover" />
+        </div>
+      </div>
     </div>
 
     <!-- Quotes -->
@@ -118,9 +246,20 @@ function logout() { auth.logout(); router.push('/login') }
               <!-- Edit row -->
               <tr v-if="editingPost?.id === post.id">
                 <td colspan="4" class="px-4 py-3 bg-gray-50 dark:bg-white/5">
-                  <div class="flex flex-col gap-2">
-                    <label class="text-xs font-semibold text-slate-500">Tags (comma separated)</label>
-                    <input v-model="editTags" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30" />
+                  <div class="flex flex-col gap-3">
+                    <div>
+                      <label class="text-xs font-semibold text-slate-500 block mb-1">Title</label>
+                      <input v-model="editTitle" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30" />
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-slate-500 block mb-1">Tags (comma separated)</label>
+                      <input v-model="editTags" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30" />
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-slate-500 block mb-1">Cover image</label>
+                      <input type="file" accept="image/*" @change="onEditCoverChange" class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-brand-50 file:text-brand-600 file:font-medium" />
+                      <img v-if="editingPost.cover_image" :src="editingPost.cover_image" alt="current cover" class="mt-2 h-16 w-auto rounded-lg border border-gray-200 dark:border-white/10" />
+                    </div>
                     <div class="flex gap-2">
                       <button @click="saveEdit" class="px-3 py-1.5 text-xs font-medium bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-all">Save</button>
                       <button @click="cancelEdit" class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors">Cancel</button>

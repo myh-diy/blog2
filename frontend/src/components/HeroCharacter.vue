@@ -1,57 +1,56 @@
 <template>
   <svg viewBox="0 0 400 400" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-    <!-- Background decoration -->
-    <circle cx="200" cy="200" r="180" fill="var(--brand-50)" class="dark:opacity-20"/>
-    <circle cx="320" cy="80" r="30" fill="var(--accent-100)" class="dark:opacity-30"/>
-    <circle cx="60" cy="100" r="20" fill="var(--brand-100)" class="dark:opacity-30"/>
-    <circle cx="340" cy="300" r="24" fill="var(--brand-100)" class="dark:opacity-30"/>
+    <!-- Background soft circle -->
+    <circle cx="200" cy="200" r="170" fill="var(--brand-50, #fff1f8)" opacity="0.6"/>
 
-    <!-- Character body -->
-    <path d="M130 380 Q200 420 270 380 L270 300 Q200 280 130 300 Z" fill="#f8fafc"/>
-    <path d="M130 300 Q200 280 270 300 L270 380 Q200 420 130 380 Z" fill="var(--brand-100)" opacity="0.5"/>
+    <!-- Back hair -->
+    <path fill="var(--brand-200, #ffc9e9)" d="M110 180 Q100 260 120 310 Q200 340 280 310 Q300 260 290 180 Q290 110 200 100 Q110 110 110 180"/>
 
-    <!-- Hair back -->
-    <path d="M120 180 Q90 280 110 340 L290 340 Q310 280 280 180 Q200 120 120 180" fill="var(--brand-200)"/>
+    <!-- Body / Dress -->
+    <path fill="var(--brand-200, #ffc9e9)" d="M150 280 Q200 270 250 280 L270 360 Q200 380 130 360 Z"/>
+    <path fill="var(--brand-100, #ffe4f3)" d="M160 285 Q200 278 240 285 L255 350 Q200 365 145 350 Z"/>
+
+    <!-- Neck -->
+    <rect x="185" y="250" width="30" height="40" rx="8" fill="#fff1e6"/>
 
     <!-- Face -->
-    <ellipse cx="200" cy="200" rx="75" ry="85" fill="#fefce8"/>
+    <ellipse cx="200" cy="200" rx="65" ry="72" fill="#fff1e6"/>
 
-    <!-- Hair front -->
-    <path d="M125 160 Q140 120 200 120 Q260 120 275 160 Q285 200 275 230 Q260 180 200 170 Q140 180 125 230 Q115 200 125 160" fill="var(--brand-300)"/>
-    <path d="M180 125 Q200 140 220 125" fill="none" stroke="var(--brand-400)" stroke-width="3" stroke-linecap="round"/>
+    <!-- Front hair / bangs -->
+    <path fill="var(--brand-200, #ffc9e9)" d="M135 160 Q150 120 200 120 Q250 120 265 160 Q270 200 255 210 Q240 170 200 165 Q160 170 145 210 Q130 200 135 160"/>
+    <path fill="var(--brand-300, #ff9dd4)" d="M180 125 Q200 140 220 125 Q210 155 200 150 Q190 155 180 125" opacity="0.6"/>
 
     <!-- Eyes -->
-    <ellipse cx="170" cy="205" rx="12" ry="16" fill="#334155"/>
-    <ellipse cx="230" cy="205" rx="12" ry="16" fill="#334155"/>
-    <circle cx="174" cy="200" r="4" fill="white"/>
-    <circle cx="234" cy="200" r="4" fill="white"/>
+    <ellipse cx="170" cy="205" rx="11" ry="15" fill="#475569"/>
+    <ellipse cx="230" cy="205" rx="11" ry="15" fill="#475569"/>
+    <circle cx="174" cy="200" r="5" fill="white"/>
+    <circle cx="234" cy="200" r="5" fill="white"/>
+    <circle cx="172" cy="212" r="3" fill="var(--brand-400, #fb7299)" opacity="0.4"/>
+    <circle cx="232" cy="212" r="3" fill="var(--brand-400, #fb7299)" opacity="0.4"/>
 
     <!-- Blush -->
-    <ellipse cx="150" cy="230" rx="12" ry="8" fill="var(--brand-200)" opacity="0.6"/>
-    <ellipse cx="250" cy="230" rx="12" ry="8" fill="var(--brand-200)" opacity="0.6"/>
+    <ellipse cx="150" cy="230" rx="14" ry="9" fill="var(--brand-300, #ff9dd4)" opacity="0.5"/>
+    <ellipse cx="250" cy="230" rx="14" ry="9" fill="var(--brand-300, #ff9dd4)" opacity="0.5"/>
 
     <!-- Mouth -->
-    <path d="M190 245 Q200 255 210 245" fill="none" stroke="#334155" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M190 248 Q200 256 210 248" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round"/>
 
-    <!-- Leaf hair accessory -->
-    <path d="M260 140 Q290 120 300 150 Q280 160 260 140" fill="var(--accent-400)"/>
-    <path d="M280 145 Q300 135 310 155" fill="none" stroke="var(--accent-600)" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Bow hair accessory -->
+    <g transform="translate(250, 130)">
+      <ellipse cx="0" cy="0" rx="18" ry="12" transform="rotate(-30)" fill="var(--accent-400, #f472b6)"/>
+      <ellipse cx="0" cy="0" rx="18" ry="12" transform="rotate(30)" fill="var(--accent-400, #f472b6)"/>
+      <circle cx="0" cy="0" r="6" fill="var(--accent-500, #ec4899)"/>
+    </g>
 
-    <!-- Arms -->
-    <ellipse cx="115" cy="320" rx="18" ry="35" fill="#fefce8" transform="rotate(20 115 320)"/>
-    <ellipse cx="285" cy="320" rx="18" ry="35" fill="#fefce8" transform="rotate(-20 285 320)"/>
+    <!-- Hands -->
+    <ellipse cx="135" cy="310" rx="14" ry="22" transform="rotate(20 135 310)" fill="#fff1e6"/>
+    <ellipse cx="265" cy="310" rx="14" ry="22" transform="rotate(-20 265 310)" fill="#fff1e6"/>
 
-    <!-- Book/notepad -->
-    <rect x="155" y="330" width="90" height="70" rx="6" fill="white" stroke="#e2e8f0" stroke-width="2"/>
-    <rect x="160" y="335" width="80" height="60" rx="4" fill="var(--brand-50)"/>
-    <line x1="170" y1="350" x2="230" y2="350" stroke="var(--brand-300)" stroke-width="3" stroke-linecap="round"/>
-    <line x1="170" y1="365" x2="220" y2="365" stroke="var(--accent-300)" stroke-width="3" stroke-linecap="round"/>
-    <line x1="170" y1="380" x2="210" y2="380" stroke="var(--brand-300)" stroke-width="3" stroke-linecap="round"/>
-
-    <!-- Floating sparkles -->
-    <path d="M70 250 L75 235 L80 250 L95 255 L80 260 L75 275 L70 260 L55 255 Z" fill="var(--accent-300)"/>
-    <path d="M330 180 L333 170 L336 180 L346 183 L336 186 L333 196 L330 186 L320 183 Z" fill="var(--brand-300)"/>
-    <circle cx="90" cy="320" r="5" fill="var(--brand-200)"/>
-    <circle cx="310" cy="260" r="4" fill="var(--accent-200)"/>
+    <!-- Sparkles -->
+    <path fill="var(--accent-400, #f472b6)" d="M60 120 Q65 105 70 120 Q85 125 70 130 Q65 145 60 130 Q45 125 60 120" opacity="0.7"/>
+    <path fill="var(--brand-300, #ff9dd4)" d="M340 100 Q344 88 348 100 Q360 104 348 108 Q344 120 340 108 Q328 104 340 100" opacity="0.6"/>
+    <circle cx="80" cy="280" r="5" fill="var(--brand-200, #ffc9e9)" opacity="0.5"/>
+    <circle cx="330" cy="260" r="4" fill="var(--accent-300, #f9a8d4)" opacity="0.5"/>
+    <path fill="var(--accent-400, #f472b6)" d="M320 340 Q325 330 330 340 Q340 345 330 350 Q325 360 320 350 Q310 345 320 340" opacity="0.5"/>
   </svg>
 </template>

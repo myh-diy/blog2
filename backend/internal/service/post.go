@@ -119,6 +119,10 @@ func UpdatePost(db *gorm.DB, id uint, updates map[string]interface{}) (*model.Po
 	if err := db.Model(post).Updates(updates).Error; err != nil {
 		return nil, err
 	}
+	// Keep FTS index in sync if the title changed
+	if newTitle, ok := updates["title"].(string); ok && newTitle != post.Title {
+		syncFTS(db, id, newTitle, post.ContentMD)
+	}
 	return GetPostByID(db, id)
 }
 
