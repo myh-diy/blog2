@@ -11,24 +11,25 @@
     max-width: 100%;
   }
   body {
-    @apply bg-warm-50 text-warm-800 antialiased;
-    @apply dark:bg-[#0d0714] dark:text-warm-200;
+    @apply bg-gray-50 text-slate-700 antialiased;
+    @apply dark:bg-slate-950 dark:text-slate-200;
   }
   ::selection {
-    @apply bg-brand-200 dark:bg-pop-700/50;
+    @apply bg-brand-200 dark:bg-brand-700/50;
   }
 }
 
 @layer components {
   .tag-pill {
     @apply inline-flex items-center text-xs px-2.5 py-1 rounded-full font-medium
-           bg-brand-50 text-brand-700 dark:bg-pop-900/40 dark:text-pop-300
-           hover:bg-brand-100 dark:hover:bg-pop-900/60 transition-colors;
+           bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300
+           hover:bg-brand-200 dark:hover:bg-brand-900/60 transition-colors;
   }
   .btn-primary {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium
-           bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700
-           dark:bg-pop-500 dark:hover:bg-pop-600 dark:active:bg-pop-700
-           transition-all shadow-sm hover:shadow-md;
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-xl font-semibold text-white
+           bg-gradient-to-r from-brand-400 to-accent-500
+           hover:from-brand-500 hover:to-accent-600
+           active:scale-[0.98]
+           transition-all shadow-md shadow-brand-500/20 hover:shadow-lg hover:shadow-brand-500/30;
   }
 }
