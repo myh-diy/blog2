@@ -4,15 +4,14 @@ import api from '../utils/api'
 import { usePostsStore } from '../stores/posts'
 import PostCard from '../components/PostCard.vue'
 import GradientButton from '../components/GradientButton.vue'
-import HeroCharacter from '../components/HeroCharacter.vue'
 import EmptyState from '../components/EmptyState.vue'
+import HeroCharacter from '../components/HeroCharacter.vue'
 
 const postStore = usePostsStore()
 
 interface P { id: number; text: string; x: number; y: number; c: string; s: number; vx: number; vy: number; o: number }
 const particles = ref<P[]>([])
 const ready = ref(false)
-const C = ['#fb7299', '#ff5fb8', '#ff9dd4', '#a78bfa', '#8b5cf6', '#c4b5fd', '#ffc9e9']
 let raf = 0
 
 onMounted(async () => {
@@ -29,7 +28,7 @@ onMounted(async () => {
       text: quotes[i % quotes.length],
       x: Math.random() * 90 + 5,
       y: Math.random() * 80 + 10,
-      c: C[i % C.length],
+      c: 'var(--brand-400)',
       s: 12 + Math.floor(Math.random() * 16),
       vx: 0.02 + Math.random() * 0.06,
       vy: 0.01 + Math.random() * 0.04,
@@ -58,7 +57,7 @@ function animate() {
 <template>
   <div class="space-y-16">
     <!-- Hero -->
-    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-100 via-white to-accent-100 dark:from-brand-900/20 dark:via-slate-900 dark:to-accent-900/20 p-8 md:p-14 min-h-[360px] flex items-center">
+    <section class="relative overflow-hidden rounded-3xl bg-brand-50 dark:bg-brand-900/10 p-8 md:p-12 min-h-[420px] flex items-center">
       <!-- Floating quotes -->
       <div v-if="ready" class="absolute inset-0 overflow-hidden pointer-events-none">
         <div v-for="p in particles" :key="p.id"
@@ -68,10 +67,10 @@ function animate() {
         </div>
       </div>
 
-      <div class="relative z-10 flex flex-col md:flex-row items-center gap-10 w-full">
+      <div class="relative z-10 flex flex-col md:flex-row items-center gap-8 w-full">
         <div class="flex-1 text-center md:text-left">
           <h1 class="text-4xl md:text-6xl font-black text-slate-800 dark:text-slate-100 leading-tight">
-            My <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-accent-500">Blog</span>
+            My <span class="text-brand-600 dark:text-brand-400">Blog</span>
           </h1>
           <p class="mt-4 text-lg text-slate-500 dark:text-slate-400">Learning in public, one post at a time.</p>
           <div class="mt-8 flex flex-wrap justify-center md:justify-start gap-3">
@@ -86,7 +85,7 @@ function animate() {
             </router-link>
           </div>
         </div>
-        <div class="w-48 h-48 md:w-72 md:h-72 shrink-0">
+        <div class="w-64 h-64 md:w-96 md:h-96 shrink-0">
           <HeroCharacter />
         </div>
       </div>

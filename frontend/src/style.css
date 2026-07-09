@@ -27,6 +27,9 @@
     --accent-700: 15 118 110;
     --accent-800: 17 94 89;
     --accent-900: 19 78 74;
+
+    --brand-hex: #22c55e;
+    --accent-hex: #14b8a6;
   }
 
   html { scroll-behavior: smooth; }
@@ -50,10 +53,9 @@
            hover:bg-brand-200 dark:hover:bg-brand-900/60 transition-colors;
   }
   .btn-primary {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-xl font-semibold text-white
-           bg-gradient-to-r from-brand-400 to-accent-500
-           hover:from-brand-500 hover:to-accent-600
+    @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl font-semibold text-white
+           bg-brand-500 hover:bg-brand-600 active:bg-brand-700
            active:scale-[0.98]
-           transition-all shadow-md shadow-brand-500/20 hover:shadow-lg hover:shadow-brand-500/30;
+           transition-all shadow-md hover:shadow-lg;
   }
 }

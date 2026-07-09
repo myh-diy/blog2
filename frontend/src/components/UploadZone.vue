@@ -104,8 +104,8 @@ function retry() {
     :class="[
       'min-h-[200px] rounded-2xl border-2 border-dashed p-8 text-center flex items-center justify-center transition-all duration-200 cursor-pointer',
       dragging
-        ? 'border-brand-400 bg-brand-50 dark:bg-brand-900/20 scale-[1.01]'
-        : 'border-gray-300 dark:border-white/10 bg-white dark:bg-slate-900 hover:border-brand-300 dark:hover:border-brand-700 hover:bg-gray-50 dark:hover:bg-white/5'
+        ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20 scale-[1.01]'
+        : 'border-gray-300 dark:border-white/10 bg-white dark:bg-slate-900 hover:border-brand-400 dark:hover:border-brand-600 hover:bg-gray-50 dark:hover:bg-white/5'
     ]"
     @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop">
 

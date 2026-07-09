@@ -21,7 +21,7 @@ async function handleLogin() {
   <div class="min-h-[60vh] flex items-center justify-center">
     <div class="w-full max-w-sm">
       <div class="text-center mb-8">
-        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-400 to-accent-500 flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-brand-500/20 mx-auto mb-4">B</div>
+        <div class="w-16 h-16 rounded-2xl bg-brand-500 flex items-center justify-center text-white font-black text-2xl shadow-lg mx-auto mb-4">B</div>
         <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100">Admin Login</h1>
         <p class="text-sm text-slate-400 dark:text-slate-500 mt-1">Welcome back, creator!</p>
       </div>

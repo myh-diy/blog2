@@ -1,62 +1,64 @@
 import { ref, watch } from 'vue'
-import { generateCSSVars } from '../utils/color'
+import { generateCSSVars, hexToRgb } from '../utils/color'
 
-export interface ThemeColors {
+export interface ThemePreset {
+  name: string
   brand: string
   accent: string
 }
 
-const STORAGE_KEY = 'custom-theme'
+export const presets: ThemePreset[] = [
+  { name: 'Spring', brand: '#22c55e', accent: '#14b8a6' },
+  { name: 'Sakura', brand: '#fb7299', accent: '#f472b6' },
+  { name: 'Sky',    brand: '#3b82f6', accent: '#06b6d4' },
+  { name: 'Lavender', brand: '#8b5cf6', accent: '#a855f7' },
+]
 
-const defaultColors: ThemeColors = {
-  brand: '#22c55e',
-  accent: '#14b8a6',
+const STORAGE_KEY = 'theme-preset'
+
+function findPreset(name: string): ThemePreset {
+  return presets.find(p => p.name === name) || presets[0]
 }
 
-function loadColors(): ThemeColors {
+function loadPresetName(): string {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (parsed.brand && parsed.accent) return parsed
-    }
+    return localStorage.getItem(STORAGE_KEY) || 'Spring'
   } catch {}
-  return { ...defaultColors }
+  return 'Spring'
 }
 
-const colors = ref<ThemeColors>(loadColors())
+const activePreset = ref<string>(loadPresetName())
 
 export function useCustomTheme() {
   function apply() {
-    const vars = generateCSSVars(colors.value.brand, colors.value.accent)
+    const preset = findPreset(activePreset.value)
+    const vars = generateCSSVars(preset.brand, preset.accent)
     const root = document.documentElement
     for (const [key, value] of Object.entries(vars)) {
       root.style.setProperty(key, value)
     }
+    // Also set a hex reference for places that need a solid color
+    const brandRgb = hexToRgb(preset.brand)
+    const accentRgb = hexToRgb(preset.accent)
+    root.style.setProperty('--brand-hex', preset.brand)
+    root.style.setProperty('--accent-hex', preset.accent)
+    root.style.setProperty('--brand-rgb', `${brandRgb.r} ${brandRgb.g} ${brandRgb.b}`)
+    root.style.setProperty('--accent-rgb', `${accentRgb.r} ${accentRgb.g} ${accentRgb.b}`)
   }
 
-  function setBrand(hex: string) {
-    colors.value.brand = hex
+  function setPreset(name: string) {
+    activePreset.value = name
   }
 
-  function setAccent(hex: string) {
-    colors.value.accent = hex
-  }
-
-  function reset() {
-    colors.value = { ...defaultColors }
-  }
-
-  watch(colors, () => {
+  watch(activePreset, () => {
     apply()
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(colors.value))
-  }, { deep: true })
+    localStorage.setItem(STORAGE_KEY, activePreset.value)
+  })
 
   return {
-    colors,
+    presets,
+    activePreset,
     apply,
-    setBrand,
-    setAccent,
-    reset,
+    setPreset,
   }
 }

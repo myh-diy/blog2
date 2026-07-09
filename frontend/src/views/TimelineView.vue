@@ -21,7 +21,7 @@ onMounted(async () => { const r = await api.get('/timeline'); timeline.value = r
       <div v-for="entry in timeline" :key="entry.year" class="mb-12 relative">
         <!-- Year node -->
         <div class="flex items-center gap-4 mb-6">
-          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 to-accent-500 text-white flex items-center justify-center text-sm font-bold shadow-md z-10">
+          <div class="w-12 h-12 rounded-full bg-brand-500 text-white flex items-center justify-center text-sm font-bold shadow-md z-10">
             {{ entry.year.slice(2) }}
           </div>
           <h2 class="text-xl font-bold text-slate-700 dark:text-slate-200">{{ entry.year }}</h2>

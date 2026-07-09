@@ -30,14 +30,14 @@ watch(() => route.query, () => {
         <button @click="$router.push('/posts')"
           class="shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all"
           :class="!route.query.tag
-            ? 'bg-gradient-to-r from-brand-400 to-accent-500 text-white shadow-md'
+            ? 'bg-brand-500 text-white shadow-md'
             : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-gray-200 dark:border-white/10'">
           All
         </button>
         <button v-for="t in allTags" :key="t.name" @click="$router.push({ path: '/posts', query: { tag: t.name } })"
           class="shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all"
           :class="route.query.tag === t.name
-            ? 'bg-gradient-to-r from-brand-400 to-accent-500 text-white shadow-md'
+            ? 'bg-brand-500 text-white shadow-md'
             : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-gray-200 dark:border-white/10'">
           #{{ t.name }} <span class="opacity-70 ml-1">{{ t.count }}</span>
         </button>
@@ -66,7 +66,7 @@ watch(() => route.query, () => {
             <button v-for="p in totalPages" :key="p" @click="$router.push({ query: { ...route.query, page: p } })"
               class="w-10 h-10 rounded-full text-sm font-semibold transition-all"
               :class="p === currentPage
-                ? 'bg-gradient-to-r from-brand-400 to-accent-500 text-white shadow-md'
+                ? 'bg-brand-500 text-white shadow-md'
                 : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-gray-200 dark:border-white/10 hover:border-brand-300 dark:hover:border-brand-700 hover:shadow-sm'">
               {{ p }}
             </button>

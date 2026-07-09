@@ -122,7 +122,7 @@ function logout() { auth.logout(); router.push('/login') }
                     <label class="text-xs font-semibold text-slate-500">Tags (comma separated)</label>
                     <input v-model="editTags" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30" />
                     <div class="flex gap-2">
-                      <button @click="saveEdit" class="px-3 py-1.5 text-xs font-medium bg-gradient-to-r from-brand-400 to-accent-500 text-white rounded-lg hover:from-brand-500 hover:to-accent-600 transition-all">Save</button>
+                      <button @click="saveEdit" class="px-3 py-1.5 text-xs font-medium bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-all">Save</button>
                       <button @click="cancelEdit" class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors">Cancel</button>
                     </div>
                   </div>

@@ -8,7 +8,7 @@ defineProps<{ post: Post }>()
                    shadow-sm hover:shadow-xl hover:shadow-brand-500/10
                    hover:-translate-y-1 transition-all duration-300 overflow-hidden">
     <!-- Cover -->
-    <div class="h-36 bg-gradient-to-br from-brand-100 to-accent-100 dark:from-brand-900/30 dark:to-accent-900/30 relative overflow-hidden flex items-center justify-center">
+    <div class="h-36 bg-brand-100 dark:bg-brand-900/30 relative overflow-hidden flex items-center justify-center">
       <div class="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.6)_1px,transparent_0)] bg-[length:20px_20px]"></div>
       <!-- Tag badge or title initial -->
       <div class="relative z-10 flex flex-col items-center gap-2">
