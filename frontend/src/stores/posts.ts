@@ -6,6 +6,8 @@ export interface Post {
   id: number
   title: string
   slug: string
+  source_file?: string
+  cover_image?: string
   content_html: string
   toc: string
   created_at: string

@@ -5,30 +5,57 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --brand-50:  255 241 248;
+    --brand-100: 255 228 243;
+    --brand-200: 255 201 233;
+    --brand-300: 255 157 212;
+    --brand-400: 255 95 184;
+    --brand-500: 251 114 153;
+    --brand-600: 232 74 122;
+    --brand-700: 201 48 98;
+    --brand-800: 166 43 82;
+    --brand-900: 139 40 72;
+
+    --accent-50:  253 242 248;
+    --accent-100: 252 231 243;
+    --accent-200: 251 207 232;
+    --accent-300: 249 168 212;
+    --accent-400: 244 114 182;
+    --accent-500: 236 72 153;
+    --accent-600: 219 39 119;
+    --accent-700: 190 24 93;
+    --accent-800: 157 23 77;
+    --accent-900: 131 24 67;
+
+    --brand-hex: #fb7299;
+    --accent-hex: #ec4899;
+  }
+
   html { scroll-behavior: smooth; }
   html, body {
     overflow-x: hidden;
     max-width: 100%;
   }
   body {
-    @apply bg-warm-50 text-warm-800 antialiased;
-    @apply dark:bg-[#0d0714] dark:text-warm-200;
+    @apply bg-gray-50 text-slate-700 antialiased;
+    @apply dark:bg-slate-950 dark:text-slate-200;
   }
   ::selection {
-    @apply bg-brand-200 dark:bg-pop-700/50;
+    @apply bg-brand-200 dark:bg-brand-700/50;
   }
 }
 
 @layer components {
   .tag-pill {
     @apply inline-flex items-center text-xs px-2.5 py-1 rounded-full font-medium
-           bg-brand-50 text-brand-700 dark:bg-pop-900/40 dark:text-pop-300
-           hover:bg-brand-100 dark:hover:bg-pop-900/60 transition-colors;
+           bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300
+           hover:bg-brand-200 dark:hover:bg-brand-900/60 transition-colors;
   }
   .btn-primary {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium
-           bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700
-           dark:bg-pop-500 dark:hover:bg-pop-600 dark:active:bg-pop-700
-           transition-all shadow-sm hover:shadow-md;
+    @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl font-semibold text-white
+           bg-brand-500 hover:bg-brand-600 active:bg-brand-700
+           active:scale-[0.98]
+           transition-all shadow-md hover:shadow-lg;
   }
 }

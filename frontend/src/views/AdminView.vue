@@ -4,10 +4,15 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import api from '../utils/api'
 import UploadZone from '../components/UploadZone.vue'
+import GradientButton from '../components/GradientButton.vue'
+import { useBackgroundImage } from '../composables/useBackgroundImage'
+import { useSiteAvatar } from '../composables/useSiteAvatar'
 import type { Post } from '../stores/posts'
 
 const router = useRouter()
 const auth = useAuthStore()
+const { backgroundImage, setBackground, clearBackground } = useBackgroundImage()
+const { siteAvatar, isDefaultAvatar, setSiteAvatar, resetSiteAvatar } = useSiteAvatar()
 const posts = ref<Post[]>([])
 const loading = ref(true)
 const quotes = ref<{ id: number; text: string; created_at: string }[]>([])
@@ -40,83 +45,224 @@ async function deletePost(id: number) {
 }
 const editingPost = ref<Post | null>(null)
 const editTags = ref('')
+const editTitle = ref('')
+const editCoverFile = ref<File | null>(null)
 
 function startEdit(post: Post) {
   editingPost.value = post
   editTags.value = post.tags.map(t => t.name).join(', ')
+  editTitle.value = post.title
+  editCoverFile.value = null
+}
+function onEditCoverChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  if (target.files && target.files.length > 0) {
+    editCoverFile.value = target.files[0]
+  }
 }
 async function saveEdit() {
   if (!editingPost.value) return
   const tags = editTags.value.split(',').map(t => t.trim()).filter(Boolean)
-  await api.put(`/admin/posts/${editingPost.value.id}`, { tags })
+  const form = new FormData()
+  form.append('title', editTitle.value.trim())
+  tags.forEach(t => form.append('tags[]', t))
+  if (editCoverFile.value) form.append('cover_image', editCoverFile.value)
+  await api.put(`/admin/posts/${editingPost.value.id}`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
   editingPost.value = null
+  editCoverFile.value = null
   await loadPosts()
 }
 function cancelEdit() { editingPost.value = null }
 
 function logout() { auth.logout(); router.push('/login') }
+
+const bgFile = ref<File | null>(null)
+const bgUploading = ref(false)
+
+function onBgFileChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  if (target.files && target.files.length > 0) {
+    bgFile.value = target.files[0]
+  }
+}
+
+async function uploadBackground() {
+  if (!bgFile.value) return
+  bgUploading.value = true
+  try {
+    const form = new FormData()
+    form.append('image', bgFile.value)
+    const res = await api.post('/admin/upload-image', form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    setBackground(res.data.url)
+    bgFile.value = null
+  } finally {
+    bgUploading.value = false
+  }
+}
+
+const avatarFile = ref<File | null>(null)
+const avatarUploading = ref(false)
+
+function onAvatarFileChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  if (target.files && target.files.length > 0) {
+    avatarFile.value = target.files[0]
+  }
+}
+
+async function uploadAvatar() {
+  if (!avatarFile.value) return
+  avatarUploading.value = true
+  try {
+    const form = new FormData()
+    form.append('image', avatarFile.value)
+    const res = await api.post('/admin/upload-image', form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    setSiteAvatar(res.data.url)
+    avatarFile.value = null
+  } finally {
+    avatarUploading.value = false
+  }
+}
 </script>
 
 <template>
   <div>
     <div class="flex items-center justify-between mb-8">
       <div>
-        <h1 class="text-4xl font-bold text-warm-800 dark:text-warm-100 mb-1">Admin</h1>
-        <p class="text-sm text-warm-400 dark:text-warm-500">Manage your blog</p>
+        <h1 class="text-3xl font-black text-slate-800 dark:text-slate-100 mb-1">Admin</h1>
+        <p class="text-sm text-slate-400 dark:text-slate-500">Manage your blog</p>
       </div>
       <button @click="logout" class="text-sm font-medium text-red-500 hover:text-red-600 transition-colors">Logout</button>
     </div>
 
-    <UploadZone @uploaded="loadPosts" />
+    <!-- Upload -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm mb-10">
+      <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">Upload Post</h2>
+      <UploadZone @uploaded="loadPosts" />
+    </div>
+
+    <!-- Global Background -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm mb-10">
+      <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">Global Background</h2>
+      <p class="text-sm text-slate-400 dark:text-slate-500 mb-4">Upload an image to use as the site-wide background.</p>
+      <div class="flex flex-col md:flex-row md:items-start gap-5">
+        <div class="flex-1">
+          <input type="file" accept="image/*" @change="onBgFileChange"
+            class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-3 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-brand-50 file:text-brand-600 file:font-medium file:cursor-pointer" />
+          <div class="flex gap-2 mt-3">
+            <button @click="uploadBackground" :disabled="!bgFile || bgUploading"
+              class="px-4 py-2 text-xs font-medium bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+              {{ bgUploading ? 'Uploading...' : 'Apply Background' }}
+            </button>
+            <button v-if="backgroundImage" @click="clearBackground"
+              class="px-4 py-2 text-xs font-medium text-slate-500 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors">
+              Clear
+            </button>
+          </div>
+        </div>
+        <div v-if="backgroundImage"
+          class="w-full md:w-48 h-28 rounded-xl border border-gray-200 dark:border-white/10 overflow-hidden bg-gray-100 dark:bg-slate-800 bg-cover bg-center"
+          :style="{ backgroundImage: `url(${backgroundImage})` }">
+        </div>
+        <div v-else
+          class="w-full md:w-48 h-28 rounded-xl border border-dashed border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-slate-800 flex items-center justify-center text-xs text-slate-400">
+          No background set
+        </div>
+      </div>
+    </div>
+
+    <!-- Site Avatar -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm mb-10">
+      <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">Site Avatar</h2>
+      <p class="text-sm text-slate-400 dark:text-slate-500 mb-4">Upload a large round avatar for the right-side decoration. Default is the Go gopher.</p>
+      <div class="flex flex-col md:flex-row md:items-center gap-5">
+        <div class="flex-1">
+          <input type="file" accept="image/*" @change="onAvatarFileChange"
+            class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-3 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-brand-50 file:text-brand-600 file:font-medium file:cursor-pointer" />
+          <div class="flex gap-2 mt-3">
+            <button @click="uploadAvatar" :disabled="!avatarFile || avatarUploading"
+              class="px-4 py-2 text-xs font-medium bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+              {{ avatarUploading ? 'Uploading...' : 'Apply Avatar' }}
+            </button>
+            <button v-if="!isDefaultAvatar" @click="resetSiteAvatar"
+              class="px-4 py-2 text-xs font-medium text-slate-500 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors">
+              Reset to Gopher
+            </button>
+          </div>
+        </div>
+        <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-white dark:border-slate-800 shadow-md bg-gray-100 dark:bg-slate-800 flex-shrink-0">
+          <img :src="siteAvatar" alt="site avatar preview" class="w-full h-full object-cover" />
+        </div>
+      </div>
+    </div>
 
     <!-- Quotes -->
-    <div class="mt-10">
-      <h2 class="text-xl font-bold text-warm-800 dark:text-warm-100 mb-1">Floating Quotes <span class="ml-2 text-sm font-normal text-warm-400">({{ quotes.length }})</span></h2>
-      <p class="text-sm text-warm-400 dark:text-warm-500 mb-4">Homepage floating sentences. Short 10-80 char phrases work best.</p>
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm mb-10">
+      <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">Floating Quotes <span class="ml-2 text-sm font-normal text-slate-400">({{ quotes.length }})</span></h2>
+      <p class="text-sm text-slate-400 dark:text-slate-500 mb-4">Homepage floating sentences. Short 10-80 char phrases work best.</p>
       <form @submit.prevent="addQuote" class="flex gap-3 mb-4">
         <input v-model="newQuote" placeholder="Enter a quote..." maxlength="200"
-          class="flex-1 px-4 py-2.5 bg-white dark:bg-white/5 border border-warm-200 dark:border-white/10 rounded-xl text-sm text-warm-800 dark:text-warm-100 placeholder-warm-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 dark:focus:ring-pop-500/30 focus:border-brand-500 dark:focus:border-pop-500 transition-all" />
-        <button type="submit" class="btn-primary text-sm">Add</button>
+          class="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all" />
+        <GradientButton type="submit">Add</GradientButton>
       </form>
-      <div v-if="quotes.length" class="bg-white dark:bg-white/5 rounded-xl border border-warm-200 dark:border-white/5 overflow-hidden">
-        <div v-for="q in quotes" :key="q.id" class="flex items-center justify-between px-4 py-2.5 border-b border-warm-100 dark:border-white/5 last:border-0 hover:bg-warm-50 dark:hover:bg-white/5 transition-colors">
-          <span class="text-sm text-warm-700 dark:text-warm-300 flex-1 mr-4">{{ q.text }}</span>
+      <div v-if="quotes.length" class="rounded-xl border border-gray-100 dark:border-white/5 overflow-hidden">
+        <div v-for="q in quotes" :key="q.id" class="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+          <span class="text-sm text-slate-700 dark:text-slate-300 flex-1 mr-4">{{ q.text }}</span>
           <button @click="deleteQuote(q.id)" class="text-xs font-medium text-red-500 hover:text-red-600 shrink-0 transition-colors">Delete</button>
         </div>
       </div>
-      <p v-else class="text-sm text-warm-400 dark:text-warm-500 italic">No quotes yet. Falling back to sentences from blog posts.</p>
+      <p v-else class="text-sm text-slate-400 dark:text-slate-500 italic">No quotes yet. Falling back to sentences from blog posts.</p>
     </div>
 
     <!-- Posts -->
-    <div class="mt-10">
-      <h2 class="text-xl font-bold text-warm-800 dark:text-warm-100 mb-4">All Posts <span class="ml-2 text-sm font-normal text-warm-400">({{ posts.length }})</span></h2>
-      <div v-if="loading" class="text-center py-12 text-warm-400">Loading...</div>
-      <div v-else class="bg-white dark:bg-white/5 rounded-xl border border-warm-200 dark:border-white/5 overflow-hidden">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
+      <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">All Posts <span class="ml-2 text-sm font-normal text-slate-400">({{ posts.length }})</span></h2>
+      <div v-if="loading" class="text-center py-12 text-slate-400">Loading...</div>
+      <div v-else class="rounded-xl border border-gray-100 dark:border-white/5 overflow-hidden">
         <table class="w-full text-sm">
-          <thead><tr class="border-b border-warm-200 dark:border-white/5 bg-warm-50 dark:bg-white/5">
-            <th class="text-left py-3 px-4 font-semibold text-warm-500 dark:text-warm-400">Title</th>
-            <th class="text-left py-3 px-4 font-semibold text-warm-500 dark:text-warm-400 w-28">Date</th>
-            <th class="text-right py-3 px-4 font-semibold text-warm-500 dark:text-warm-400 w-32">Actions</th>
+          <thead><tr class="border-b border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-white/5">
+            <th class="text-left py-3 px-4 font-semibold text-slate-500 dark:text-slate-400">Title</th>
+            <th class="text-left py-3 px-4 font-semibold text-slate-500 dark:text-slate-400 w-40">MD File</th>
+            <th class="text-left py-3 px-4 font-semibold text-slate-500 dark:text-slate-400 w-28">Date</th>
+            <th class="text-right py-3 px-4 font-semibold text-slate-500 dark:text-slate-400 w-32">Actions</th>
           </tr></thead>
-          <tbody class="divide-y divide-warm-100 dark:divide-white/5">
+          <tbody class="divide-y divide-gray-100 dark:divide-white/5">
             <template v-for="post in posts" :key="post.id">
-              <tr class="hover:bg-warm-50 dark:hover:bg-white/5 transition-colors">
-                <td class="py-3 px-4"><router-link :to="`/post/${post.slug}`" class="font-medium text-warm-800 dark:text-warm-200 hover:text-brand-600 dark:hover:text-pop-400 transition-colors">{{ post.title }}</router-link></td>
-                <td class="py-3 px-4 text-warm-400 dark:text-warm-500 font-mono text-xs">{{ post.created_at.split('T')[0] }}</td>
+              <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                <td class="py-3 px-4"><router-link :to="`/post/${post.slug}`" class="font-medium text-slate-800 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">{{ post.title }}</router-link></td>
+                <td class="py-3 px-4 text-slate-400 dark:text-slate-500 font-mono text-xs">{{ post.source_file || '-' }}</td>
+                <td class="py-3 px-4 text-slate-400 dark:text-slate-500 font-mono text-xs">{{ post.created_at.split('T')[0] }}</td>
                 <td class="py-3 px-4 text-right space-x-2">
-                  <button @click="startEdit(post)" class="text-xs font-medium text-brand-600 dark:text-pop-400 hover:underline transition-colors">Edit</button>
+                  <button @click="startEdit(post)" class="text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline transition-colors">Edit</button>
                   <button @click="deletePost(post.id)" class="text-xs font-medium text-red-500 hover:text-red-600 transition-colors">Delete</button>
                 </td>
               </tr>
               <!-- Edit row -->
               <tr v-if="editingPost?.id === post.id">
-                <td colspan="3" class="px-4 py-3 bg-warm-50 dark:bg-white/5">
-                  <div class="flex flex-col gap-2">
-                    <label class="text-xs font-semibold text-warm-500">Tags (comma separated)</label>
-                    <input v-model="editTags" class="w-full px-3 py-2 bg-white dark:bg-warm-800 border border-warm-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30" />
+                <td colspan="4" class="px-4 py-3 bg-gray-50 dark:bg-white/5">
+                  <div class="flex flex-col gap-3">
+                    <div>
+                      <label class="text-xs font-semibold text-slate-500 block mb-1">Title</label>
+                      <input v-model="editTitle" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30" />
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-slate-500 block mb-1">Tags (comma separated)</label>
+                      <input v-model="editTags" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30" />
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-slate-500 block mb-1">Cover image</label>
+                      <input type="file" accept="image/*" @change="onEditCoverChange" class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-brand-50 file:text-brand-600 file:font-medium" />
+                      <img v-if="editingPost.cover_image" :src="editingPost.cover_image" alt="current cover" class="mt-2 h-16 w-auto rounded-lg border border-gray-200 dark:border-white/10" />
+                    </div>
                     <div class="flex gap-2">
-                      <button @click="saveEdit" class="px-3 py-1.5 text-xs font-medium bg-brand-500 text-white rounded-lg hover:bg-brand-600">Save</button>
-                      <button @click="cancelEdit" class="px-3 py-1.5 text-xs font-medium text-warm-500 hover:bg-warm-100 dark:hover:bg-white/10 rounded-lg">Cancel</button>
+                      <button @click="saveEdit" class="px-3 py-1.5 text-xs font-medium bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-all">Save</button>
+                      <button @click="cancelEdit" class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors">Cancel</button>
                     </div>
                   </div>
                 </td>

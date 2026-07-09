@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import api from '../utils/api'
+import KawaiiIcon from './KawaiiIcon.vue'
 
 const emit = defineEmits<{ uploaded: [] }>()
 const dragging = ref(false)
@@ -20,7 +21,6 @@ async function onDrop(e: DragEvent) {
   if (!items) return
   const files: File[] = []
 
-  // Recursively collect files from directories
   async function collect(entry: FileSystemEntry) {
     if (entry.isFile) {
       const file = await getFile(entry as FileSystemFileEntry)
@@ -39,7 +39,6 @@ async function onDrop(e: DragEvent) {
   }
 
   if (entries.length === 0) {
-    // Fallback: use files directly
     const dropped = e.dataTransfer?.files
     if (dropped) for (let i = 0; i < dropped.length; i++) files.push(dropped[i])
   } else {
@@ -93,7 +92,6 @@ async function doUpload(files: File[]) {
   } finally { uploading.value = false }
 }
 
-// Retry on error
 function retry() {
   status.value = 'idle'
   message.value = ''
@@ -102,55 +100,46 @@ function retry() {
 </script>
 
 <template>
-  <div :class="['upload-zone', dragging && 'upload-drag']"
+  <div
+    :class="[
+      'min-h-[200px] rounded-2xl border-2 border-dashed p-8 text-center flex items-center justify-center transition-all duration-200 cursor-pointer',
+      dragging
+        ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20 scale-[1.01]'
+        : 'border-gray-300 dark:border-white/10 bg-white dark:bg-slate-900 hover:border-brand-400 dark:hover:border-brand-600 hover:bg-gray-50 dark:hover:bg-white/5'
+    ]"
     @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop">
+
     <!-- Idle -->
-    <div v-if="status === 'idle'" class="upload-content">
-      <div class="upload-icon">📂</div>
-      <p class="upload-text">Drop <code>.md</code> + images here</p>
-      <p class="upload-hint">Supports folders — directory structure is preserved</p>
+    <div v-if="status === 'idle'" class="flex flex-col items-center gap-3">
+      <div class="w-16 h-16">
+        <KawaiiIcon name="upload" />
+      </div>
+      <p class="text-slate-600 dark:text-slate-300 font-medium">Drop <code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 text-brand-600 dark:text-brand-400 text-sm">.md</code> + images here</p>
+      <p class="text-xs text-slate-400">Supports folders — directory structure is preserved</p>
     </div>
 
     <!-- Uploading -->
-    <div v-else-if="status === 'uploading'" class="upload-content">
-      <div class="upload-spin"></div>
-      <p class="upload-text">Uploading &amp; parsing {{ fileNames.length }} file(s)...</p>
+    <div v-else-if="status === 'uploading'" class="flex flex-col items-center gap-3">
+      <div class="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+      <p class="text-slate-600 dark:text-slate-300 font-medium">Uploading &amp; parsing {{ fileNames.length }} file(s)...</p>
     </div>
 
     <!-- Success -->
-    <div v-else-if="status === 'success'" class="upload-content">
-      <div class="upload-icon">✅</div>
-      <p class="text-green-600 dark:text-green-400 font-medium">{{ message }}</p>
-      <button @click="retry" class="upload-retry">Upload more</button>
+    <div v-else-if="status === 'success'" class="flex flex-col items-center gap-3">
+      <div class="w-16 h-16">
+        <KawaiiIcon name="happy" />
+      </div>
+      <p class="text-green-600 dark:text-green-400 font-medium">Uploaded: {{ message }}</p>
+      <button @click.stop="retry" class="text-sm text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 underline">Upload more</button>
     </div>
 
     <!-- Error -->
-    <div v-else class="upload-content">
-      <div class="upload-icon">❌</div>
+    <div v-else class="flex flex-col items-center gap-3">
+      <div class="w-16 h-16">
+        <KawaiiIcon name="sad" />
+      </div>
       <p class="text-red-500 font-medium">{{ message }}</p>
-      <button @click="retry" class="upload-retry">Try again</button>
+      <button @click.stop="retry" class="text-sm text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 underline">Try again</button>
     </div>
   </div>
 </template>
-
-<style>
-.upload-zone {
-  border: 2px dashed #d6d3d1; border-radius: 1rem; padding: 3rem 1rem;
-  text-align: center; transition: all .2s; background: #fff; cursor: pointer;
-  min-height: 180px; display: flex; align-items: center; justify-content: center;
-}
-.dark .upload-zone { background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.1); }
-.upload-drag { border-color: #f97316; background: #fff7ed; transform: scale(1.01); border-style: solid; }
-.dark .upload-drag { border-color: #f43f5e; background: rgba(244,63,94,.06); }
-.upload-content { display: flex; flex-direction: column; align-items: center; gap: .5rem; }
-.upload-icon { font-size: 3rem; }
-.upload-text { color: #78716c; font-weight: 500; }
-.upload-text code { background: #f5f5f4; padding: .15rem .4rem; border-radius: .25rem; font-size: .85em; }
-.dark .upload-text { color: #a8a29e; }
-.dark .upload-text code { background: rgba(255,255,255,.08); }
-.upload-hint { font-size: .75rem; color: #a8a29e; }
-.upload-spin { width: 2rem; height: 2rem; border: 2px solid #f97316; border-top-color: transparent; border-radius: 50%; animation: spin .6s linear infinite; }
-.dark .upload-spin { border-color: #f43f5e; border-top-color: transparent; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.upload-retry { font-size: .8rem; color: #78716c; text-decoration: underline; background: none; border: none; cursor: pointer; margin-top: .5rem; }
-</style>
