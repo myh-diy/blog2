@@ -13,27 +13,27 @@ const navLinks = [
 </script>
 
 <template>
-  <div class="min-h-screen bg-warm-50 dark:bg-[#0d0714]">
-    <!-- Glass navbar -->
-    <header class="sticky top-0 z-50 backdrop-blur-xl bg-warm-50/70 dark:bg-[#0d0714]/70 border-b border-warm-200/40 dark:border-white/5">
-      <nav class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+  <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-950">
+    <!-- Navbar -->
+    <header class="sticky top-0 z-50 backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 border-b border-gray-200 dark:border-white/5">
+      <nav class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <!-- Logo -->
         <router-link to="/" class="group flex items-center gap-2.5">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 dark:from-pop-400 dark:to-pop-600 flex items-center justify-center text-white font-black text-base shadow-md group-hover:shadow-lg transition-shadow">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-400 to-accent-500 flex items-center justify-center text-white font-black text-base shadow-md group-hover:shadow-lg group-hover:shadow-brand-500/25 transition-all">
             B
           </div>
-          <span class="text-lg font-bold text-warm-800 dark:text-warm-100 group-hover:text-brand-600 dark:group-hover:text-pop-400 transition-colors">
+          <span class="text-lg font-bold text-slate-800 dark:text-slate-100 group-hover:text-brand-500 transition-colors">
             My Blog
           </span>
         </router-link>
 
         <!-- Nav -->
-        <div class="flex items-center gap-0.5">
+        <div class="flex items-center gap-1">
           <router-link v-for="link in navLinks" :key="link.to" :to="link.to"
             class="px-3 py-2 rounded-lg text-sm font-medium transition-all"
             :class="route.path === link.to
-              ? 'text-brand-600 dark:text-pop-400 bg-brand-50 dark:bg-pop-900/20'
-              : 'text-warm-500 dark:text-warm-400 hover:text-warm-800 dark:hover:text-warm-200 hover:bg-warm-100 dark:hover:bg-white/5'"
+              ? 'text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-white/5'"
           >
             {{ link.label }}
           </router-link>
@@ -42,13 +42,14 @@ const navLinks = [
       </nav>
     </header>
 
-    <main class="max-w-4xl mx-auto px-4 py-10">
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-10">
       <slot />
     </main>
 
-    <footer class="border-t border-warm-200/50 dark:border-white/5 mt-20">
-      <div class="max-w-4xl mx-auto px-4 py-8 text-center text-sm text-warm-400 dark:text-warm-500">
-        Built with Vue + Go · Learning in public
+    <footer class="border-t border-gray-200 dark:border-white/5">
+      <div class="max-w-6xl mx-auto px-4 py-8 text-center">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-400 to-accent-500 flex items-center justify-center text-white font-black text-sm mx-auto mb-3">B</div>
+        <p class="text-sm text-slate-400 dark:text-slate-500">Built with Vue + Go · Learning in public</p>
       </div>
     </footer>
   </div>
