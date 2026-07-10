@@ -5,14 +5,17 @@ import { useAuthStore } from '../stores/auth'
 import api from '../utils/api'
 import UploadZone from '../components/UploadZone.vue'
 import GradientButton from '../components/GradientButton.vue'
+import ThemePreset from '../components/ThemePreset.vue'
 import { useBackgroundImage } from '../composables/useBackgroundImage'
 import { useSiteAvatar } from '../composables/useSiteAvatar'
+import { useSiteTitle } from '../composables/useSiteTitle'
 import type { Post } from '../stores/posts'
 
 const router = useRouter()
 const auth = useAuthStore()
-const { backgroundImage, setBackground, clearBackground } = useBackgroundImage()
+const { backgroundImage, bgOpacity, setBackground, clearBackground, setOpacity } = useBackgroundImage()
 const { siteAvatar, isDefaultAvatar, setSiteAvatar, resetSiteAvatar } = useSiteAvatar()
+const { siteTitle, setSiteTitle } = useSiteTitle()
 const posts = ref<Post[]>([])
 const loading = ref(true)
 const quotes = ref<{ id: number; text: string; created_at: string }[]>([])
@@ -107,6 +110,11 @@ async function uploadBackground() {
 const avatarFile = ref<File | null>(null)
 const avatarUploading = ref(false)
 
+const editSiteTitle = ref(siteTitle.value)
+function saveSiteTitle() {
+  setSiteTitle(editSiteTitle.value)
+}
+
 function onAvatarFileChange(e: Event) {
   const target = e.target as HTMLInputElement
   if (target.files && target.files.length > 0) {
@@ -165,6 +173,19 @@ async function uploadAvatar() {
               Clear
             </button>
           </div>
+          <div v-if="backgroundImage" class="mt-4">
+            <label class="flex items-center justify-between text-xs text-slate-500 mb-1">
+              <span>Overlay opacity</span>
+              <span class="font-mono">{{ Math.round(bgOpacity * 100) }}%</span>
+            </label>
+            <input
+              type="range" min="0" max="1" step="0.05"
+              :value="bgOpacity"
+              @input="setOpacity(Number(($event.target as HTMLInputElement).value))"
+              class="w-full h-1.5 bg-gray-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-500"
+            />
+            <p class="text-[10px] text-slate-400 mt-1">Lower = clearer background, higher = better text readability.</p>
+          </div>
         </div>
         <div v-if="backgroundImage"
           class="w-full md:w-48 h-28 rounded-xl border border-gray-200 dark:border-white/10 overflow-hidden bg-gray-100 dark:bg-slate-800 bg-cover bg-center"
@@ -200,6 +221,27 @@ async function uploadAvatar() {
           <img :src="siteAvatar" alt="site avatar preview" class="w-full h-full object-cover" />
         </div>
       </div>
+    </div>
+
+    <!-- Site Title -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm mb-10">
+      <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">Site Title</h2>
+      <p class="text-sm text-slate-400 dark:text-slate-500 mb-4">Displayed in navbar, homepage hero and footer.</p>
+      <div class="flex gap-3">
+        <input v-model="editSiteTitle"
+          class="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all" />
+        <button @click="saveSiteTitle"
+          class="px-4 py-2 text-xs font-medium bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-all">
+          Save
+        </button>
+      </div>
+    </div>
+
+    <!-- Theme -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm mb-10">
+      <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">Theme</h2>
+      <p class="text-sm text-slate-400 dark:text-slate-500 mb-4">Choose a color preset for the whole site.</p>
+      <ThemePreset />
     </div>
 
     <!-- Quotes -->

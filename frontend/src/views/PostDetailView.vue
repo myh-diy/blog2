@@ -20,7 +20,7 @@ onMounted(async () => {
   </div>
 
   <div v-else class="relative max-w-6xl mx-auto">
-    <article class="max-w-3xl mx-auto xl:mx-0">
+    <article class="max-w-5xl mx-auto xl:mx-0">
       <router-link to="/posts" class="inline-flex items-center gap-1 text-sm text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 mb-6 transition-colors">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
         Back to posts
@@ -50,8 +50,8 @@ onMounted(async () => {
       </div>
     </article>
 
-    <!-- Sticky TOC beside the article (desktop) -->
-    <aside class="hidden xl:block w-56 shrink-0 sticky top-24 self-start z-40">
+    <!-- Floating TOC beside the article (desktop) -->
+    <aside class="hidden xl:block fixed top-24 w-56 z-40" style="left: calc(50% + 22rem);">
       <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-lg max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-thin">
         <TOCSidebar :toc-json="post.toc" />
       </div>

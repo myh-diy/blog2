@@ -5,34 +5,46 @@ import { usePostsStore } from '../stores/posts'
 import PostCard from '../components/PostCard.vue'
 import GradientButton from '../components/GradientButton.vue'
 import EmptyState from '../components/EmptyState.vue'
-import HeroCharacter from '../components/HeroCharacter.vue'
+import { useSiteAvatar } from '../composables/useSiteAvatar'
+import { useSiteTitle } from '../composables/useSiteTitle'
 
 const postStore = usePostsStore()
+const { siteAvatar } = useSiteAvatar()
+const { siteTitle } = useSiteTitle()
 
 interface P { id: number; text: string; x: number; y: number; c: string; s: number; vx: number; vy: number; o: number }
 const particles = ref<P[]>([])
 const ready = ref(false)
 let raf = 0
+let quotePool: string[] = []
+
+const DANMAKU_COLORS = [
+  '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981',
+  '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e'
+]
+
+function randomColor() {
+  return DANMAKU_COLORS[Math.floor(Math.random() * DANMAKU_COLORS.length)]
+}
 
 onMounted(async () => {
   postStore.fetchPosts(1, '')
 
-  let quotes: string[] = []
-  try { const r = await api.get('/quotes'); quotes = r.data.quotes } catch {}
-  if (!quotes.length) quotes = ['Stay curious', 'Keep learning', 'Code is poetry', 'Build awesome things', 'Think different', 'Simplicity wins']
+  try { const r = await api.get('/quotes'); quotePool = r.data.quotes } catch {}
+  if (!quotePool.length) quotePool = ['Stay curious', 'Keep learning', 'Code is poetry', 'Build awesome things', 'Think different', 'Simplicity wins']
 
   const items: P[] = []
   for (let i = 0; i < 12; i++) {
     items.push({
       id: i,
-      text: quotes[i % quotes.length],
-      x: Math.random() * 90 + 5,
+      text: quotePool[i % quotePool.length],
+      x: -20 + Math.random() * 130,
       y: Math.random() * 80 + 10,
-      c: 'var(--brand-400)',
-      s: 12 + Math.floor(Math.random() * 16),
-      vx: 0.02 + Math.random() * 0.06,
-      vy: 0.01 + Math.random() * 0.04,
-      o: 0.15 + Math.random() * 0.25,
+      c: randomColor(),
+      s: 14 + Math.floor(Math.random() * 16),
+      vx: 0.08 + Math.random() * 0.12,
+      vy: 0,
+      o: 0.6 + Math.random() * 0.35,
     })
   }
   particles.value = items
@@ -42,13 +54,26 @@ onMounted(async () => {
 
 onUnmounted(() => cancelAnimationFrame(raf))
 
+function resetParticle(p: P): P {
+  return {
+    ...p,
+    text: quotePool[Math.floor(Math.random() * quotePool.length)],
+    x: -20 - Math.random() * 30,
+    y: Math.random() * 80 + 10,
+    c: randomColor(),
+    s: 14 + Math.floor(Math.random() * 16),
+    vx: 0.08 + Math.random() * 0.12,
+    o: 0.6 + Math.random() * 0.35,
+  }
+}
+
 function animate() {
   particles.value = particles.value.map(p => {
     let x = p.x + p.vx
-    let y = p.y + p.vy
-    if (x < -10 || x > 110) p.vx = -p.vx
-    if (y < -10 || y > 110) p.vy = -p.vy
-    return { ...p, x, y }
+    if (x > 120) {
+      return resetParticle(p)
+    }
+    return { ...p, x }
   })
   raf = requestAnimationFrame(animate)
 }
@@ -57,7 +82,7 @@ function animate() {
 <template>
   <div class="space-y-16">
     <!-- Hero -->
-    <section class="relative overflow-hidden rounded-3xl bg-brand-50 dark:bg-brand-900/10 p-8 md:p-12 min-h-[420px] flex items-center">
+    <section class="relative overflow-hidden rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-gray-100 dark:border-white/5 p-8 md:p-12 min-h-[420px] flex items-center">
       <!-- Floating quotes -->
       <div v-if="ready" class="absolute inset-0 overflow-hidden pointer-events-none">
         <div v-for="p in particles" :key="p.id"
@@ -69,8 +94,8 @@ function animate() {
 
       <div class="relative z-10 flex flex-col md:flex-row items-center gap-8 w-full">
         <div class="flex-1 text-center md:text-left">
-          <h1 class="text-4xl md:text-6xl font-black text-slate-800 dark:text-slate-100 leading-tight">
-            My <span class="text-brand-600 dark:text-brand-400">Blog</span>
+          <h1 class="text-4xl md:text-6xl font-black text-brand-600 dark:text-brand-400 leading-tight">
+            {{ siteTitle }}
           </h1>
           <p class="mt-4 text-lg text-slate-500 dark:text-slate-400">Learning in public, one post at a time.</p>
           <div class="mt-8 flex flex-wrap justify-center md:justify-start gap-3">
@@ -85,8 +110,10 @@ function animate() {
             </router-link>
           </div>
         </div>
-        <div class="w-64 h-64 md:w-96 md:h-96 shrink-0">
-          <HeroCharacter />
+        <div class="w-56 h-56 md:w-80 md:h-80 shrink-0">
+          <div class="w-full h-full rounded-full overflow-hidden border-8 border-white/60 dark:border-slate-800/60 shadow-2xl bg-gray-100 dark:bg-slate-800">
+            <img :src="siteAvatar" alt="site avatar" class="w-full h-full object-cover" />
+          </div>
         </div>
       </div>
     </section>
