@@ -1,4 +1,5 @@
 import { ref, onMounted } from 'vue'
+import api from '../utils/api'
 
 const STORAGE_KEY = 'blog-site-avatar'
 
@@ -9,25 +10,51 @@ const DEFAULT_AVATAR =
 const siteAvatar = ref(DEFAULT_AVATAR)
 const isDefaultAvatar = ref(true)
 
+async function saveAvatar(url: string) {
+  try {
+    await api.put('/admin/settings', { site_avatar: url })
+  } catch {
+    // Offline or not admin; localStorage is already updated as cache
+  }
+}
+
 export function useSiteAvatar() {
-  onMounted(() => {
+  onMounted(async () => {
+    try {
+      const r = await api.get('/settings')
+      const s = r.data.settings as Record<string, string>
+      if (s.site_avatar !== undefined) {
+        siteAvatar.value = s.site_avatar
+        isDefaultAvatar.value = s.site_avatar === DEFAULT_AVATAR
+        localStorage.setItem(STORAGE_KEY, s.site_avatar)
+      } else {
+        loadFromLocal()
+      }
+    } catch {
+      loadFromLocal()
+    }
+  })
+
+  function loadFromLocal() {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
       siteAvatar.value = saved
-      isDefaultAvatar.value = false
+      isDefaultAvatar.value = saved === DEFAULT_AVATAR
     }
-  })
+  }
 
   function setSiteAvatar(url: string) {
     siteAvatar.value = url
     isDefaultAvatar.value = false
     localStorage.setItem(STORAGE_KEY, url)
+    saveAvatar(url)
   }
 
   function resetSiteAvatar() {
     siteAvatar.value = DEFAULT_AVATAR
     isDefaultAvatar.value = true
     localStorage.removeItem(STORAGE_KEY)
+    saveAvatar(DEFAULT_AVATAR)
   }
 
   return {

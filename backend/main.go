@@ -44,6 +44,7 @@ func main() {
 	r.GET("/api/timeline", handler.GetTimeline())
 	r.Static("/uploads", "./uploads")
 	r.GET("/api/quotes", handler.GetQuotes())
+	r.GET("/api/settings", handler.GetSettings())
 
 	// Admin routes (protected)
 	admin := r.Group("/api/admin")
@@ -56,6 +57,7 @@ func main() {
 		admin.GET("/quotes", handler.ListQuotes())
 		admin.POST("/quotes", handler.CreateQuote())
 		admin.DELETE("/quotes/:id", handler.DeleteQuote())
+		admin.PUT("/settings", handler.UpdateSettings())
 	}
 
 	// Serve SPA static files with fallback to index.html
