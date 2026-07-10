@@ -1,4 +1,5 @@
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
+import api from '../utils/api'
 import { generateCSSVars, hexToRgb } from '../utils/color'
 
 export interface ThemePreset {
@@ -30,6 +31,14 @@ function loadPresetName(): string {
 
 const activePreset = ref<string>(loadPresetName())
 
+async function savePreset(name: string) {
+  try {
+    await api.put('/admin/settings', { theme_preset: name })
+  } catch {
+    // Offline or not admin; localStorage is already updated as cache
+  }
+}
+
 export function useCustomTheme() {
   function apply() {
     const preset = findPreset(activePreset.value)
@@ -38,7 +47,6 @@ export function useCustomTheme() {
     for (const [key, value] of Object.entries(vars)) {
       root.style.setProperty(key, value)
     }
-    // Also set a hex reference for places that need a solid color
     const brandRgb = hexToRgb(preset.brand)
     const accentRgb = hexToRgb(preset.accent)
     root.style.setProperty('--brand-hex', preset.brand)
@@ -51,9 +59,24 @@ export function useCustomTheme() {
     activePreset.value = name
   }
 
+  onMounted(async () => {
+    try {
+      const r = await api.get('/settings')
+      const s = r.data.settings as Record<string, string>
+      if (s.theme_preset !== undefined && presets.some(p => p.name === s.theme_preset)) {
+        activePreset.value = s.theme_preset
+        localStorage.setItem(STORAGE_KEY, s.theme_preset)
+      }
+    } catch {
+      // Use localStorage default already loaded
+    }
+    apply()
+  })
+
   watch(activePreset, () => {
     apply()
     localStorage.setItem(STORAGE_KEY, activePreset.value)
+    savePreset(activePreset.value)
   })
 
   return {
