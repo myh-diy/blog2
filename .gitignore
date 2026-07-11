@@ -6,6 +6,8 @@ frontend/dist/
 backend/frontend-dist/
 backend/blog-server
 backend/blog-server.exe
+.gocache/
+.gomodcache/
 
 # Database
 backend/blog.db
