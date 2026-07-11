@@ -15,16 +15,29 @@ COPY backend/ ./
 COPY --from=frontend-builder /app/frontend/dist ./frontend-dist
 RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o blog-server .
 
-# Stage 3: Minimal runtime
+# Stage 3: Build mini exporter
+FROM golang:1.22-alpine AS exporter-builder
+WORKDIR /app
+COPY mini-exporter/go.mod mini-exporter/go.sum ./
+RUN go mod download
+COPY mini-exporter/ ./
+RUN CGO_ENABLED=0 GOOS=linux go build -buildvcs=false -ldflags="-s -w" -o mini-node-exporter .
+
+# Stage 4: Minimal runtime
 FROM alpine:3.21
 RUN apk add --no-cache ca-certificates tzdata
 WORKDIR /app
 COPY --from=backend-builder /app/blog-server .
+COPY --from=exporter-builder /app/mini-node-exporter .
+COPY docker-entrypoint.sh .
 RUN mkdir -p /app/uploads
-EXPOSE 8080
+RUN chmod +x /app/docker-entrypoint.sh
+EXPOSE 8080 9101
 VOLUME ["/app/uploads", "/app/data"]
 ENV PORT=8080
 ENV DB_PATH=/app/data/blog.db
 ENV JWT_SECRET=change-me-in-production
 ENV GIN_MODE=release
-CMD ["./blog-server"]
+ENV EXPORTER_ADDR=:9101
+ENV EXPORTER_METRICS_URL=http://127.0.0.1:9101/metrics
+CMD ["./docker-entrypoint.sh"]

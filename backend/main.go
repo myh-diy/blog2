@@ -45,6 +45,7 @@ func main() {
 	r.Static("/uploads", "./uploads")
 	r.GET("/api/quotes", handler.GetQuotes())
 	r.GET("/api/settings", handler.GetSettings())
+	r.GET("/api/system/metrics", handler.GetSystemMetrics(cfg.ExporterURL))
 
 	// Admin routes (protected)
 	admin := r.Group("/api/admin")

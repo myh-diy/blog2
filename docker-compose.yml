@@ -3,11 +3,13 @@ services:
     build: .
     ports:
       - "8080:8080"
+      - "9101:9101"
     volumes:
       - blog-uploads:/app/uploads
       - blog-data:/app/data
     environment:
       - JWT_SECRET=your-random-secret-here
+      - EXPORTER_METRICS_URL=http://127.0.0.1:9101/metrics
     restart: unless-stopped
 
 volumes:

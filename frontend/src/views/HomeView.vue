@@ -13,8 +13,19 @@ const { siteAvatar } = useSiteAvatar()
 const { siteTitle } = useSiteTitle()
 
 interface P { id: number; text: string; x: number; y: number; c: string; s: number; vx: number; vy: number; o: number }
+interface SystemMetrics {
+  cpu_usage_ratio: number
+  memory_total_bytes: number
+  memory_available_bytes: number
+  memory_used_bytes: number
+  memory_usage_ratio: number
+}
+
 const particles = ref<P[]>([])
 const ready = ref(false)
+const metrics = ref<SystemMetrics | null>(null)
+const metricsLoading = ref(false)
+const metricsError = ref('')
 let raf = 0
 let quotePool: string[] = []
 
@@ -77,6 +88,28 @@ function animate() {
   })
   raf = requestAnimationFrame(animate)
 }
+
+async function loadSystemMetrics() {
+  metricsLoading.value = true
+  metricsError.value = ''
+  try {
+    const res = await api.get('/system/metrics')
+    metrics.value = res.data.metrics
+  } catch {
+    metricsError.value = 'Metrics unavailable'
+  } finally {
+    metricsLoading.value = false
+  }
+}
+
+function formatPercent(value: number) {
+  return `${Math.round(value * 1000) / 10}%`
+}
+
+function formatBytes(value: number) {
+  const gib = value / 1024 / 1024 / 1024
+  return `${Math.round(gib * 10) / 10} GiB`
+}
 </script>
 
 <template>
@@ -108,6 +141,42 @@ function animate() {
                      hover:border-brand-300 dark:hover:border-brand-700 hover:shadow-md transition-all">
               Search
             </router-link>
+          </div>
+          <div class="mt-5 flex justify-center md:justify-start">
+            <div class="w-full max-w-sm rounded-2xl border border-gray-100 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 p-4 shadow-sm backdrop-blur">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <p class="text-xs font-semibold uppercase text-slate-400 dark:text-slate-500">Mini exporter</p>
+                  <p class="text-sm font-bold text-slate-700 dark:text-slate-200">CPU / RAM</p>
+                </div>
+                <button
+                  type="button"
+                  @click="loadSystemMetrics"
+                  :disabled="metricsLoading"
+                  class="px-3 py-2 rounded-lg text-xs font-semibold text-white bg-brand-500 hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  {{ metricsLoading ? 'Loading...' : 'Pull data' }}
+                </button>
+              </div>
+
+              <div v-if="metrics" class="mt-4 grid grid-cols-2 gap-3">
+                <div class="rounded-xl bg-gray-50 dark:bg-white/5 p-3">
+                  <p class="text-[11px] text-slate-400 dark:text-slate-500">CPU</p>
+                  <p class="mt-1 text-xl font-black text-slate-800 dark:text-slate-100">{{ formatPercent(metrics.cpu_usage_ratio) }}</p>
+                </div>
+                <div class="rounded-xl bg-gray-50 dark:bg-white/5 p-3">
+                  <p class="text-[11px] text-slate-400 dark:text-slate-500">RAM</p>
+                  <p class="mt-1 text-xl font-black text-slate-800 dark:text-slate-100">{{ formatPercent(metrics.memory_usage_ratio) }}</p>
+                </div>
+                <div class="col-span-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                  <span>Used {{ formatBytes(metrics.memory_used_bytes) }}</span>
+                  <span>Total {{ formatBytes(metrics.memory_total_bytes) }}</span>
+                </div>
+              </div>
+
+              <p v-else-if="metricsError" class="mt-3 text-xs font-medium text-red-500">{{ metricsError }}</p>
+              <p v-else class="mt-3 text-xs text-slate-400 dark:text-slate-500">Click to fetch live metrics from your mini exporter.</p>
+            </div>
           </div>
         </div>
         <div class="w-56 h-56 md:w-80 md:h-80 shrink-0">
