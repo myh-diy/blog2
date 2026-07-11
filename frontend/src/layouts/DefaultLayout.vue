@@ -14,6 +14,7 @@ const navLinks = [
   { to: '/posts', label: 'Posts' },
   { to: '/timeline', label: 'Timeline' },
   { to: '/search', label: 'Search' },
+  { to: '/monitor', label: 'Monitor' },
   { to: '/admin', label: 'Admin' },
 ]
 </script>
