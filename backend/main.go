@@ -39,6 +39,7 @@ func main() {
 
 	r.GET("/api/posts", handler.ListPosts())
 	r.GET("/api/posts/:slug", handler.GetPost())
+	r.GET("/api/posts/:slug/export", handler.ExportPost())
 	r.GET("/api/tags", handler.ListTags())
 	r.GET("/api/search", handler.SearchPosts())
 	r.GET("/api/timeline", handler.GetTimeline())
@@ -53,6 +54,8 @@ func main() {
 		admin.GET("/system/metrics", handler.GetSystemMetrics(cfg.ExporterURL))
 		admin.POST("/upload", handler.UploadPost())
 		admin.POST("/upload-image", handler.UploadImage())
+		admin.GET("/posts/:id/source", handler.GetPostSource())
+		admin.PUT("/posts/:id/content", handler.UpdatePostContent())
 		admin.PUT("/posts/:id", handler.UpdatePost())
 		admin.DELETE("/posts/:id", handler.DeletePost())
 		admin.GET("/quotes", handler.ListQuotes())

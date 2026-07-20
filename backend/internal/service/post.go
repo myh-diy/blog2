@@ -126,6 +126,48 @@ func UpdatePost(db *gorm.DB, id uint, updates map[string]interface{}) (*model.Po
 	return GetPostByID(db, id)
 }
 
+// UpdatePostContent reparses edited Markdown and updates its rendered fields
+// in one transaction so readers never see a partially updated post.
+func UpdatePostContent(db *gorm.DB, id uint, rawMD string) (*model.Post, error) {
+	if strings.TrimSpace(rawMD) == "" {
+		return nil, fmt.Errorf("markdown content is required")
+	}
+	result, err := parser.ParseMarkdown([]byte(rawMD))
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.Transaction(func(tx *gorm.DB) error {
+		post, err := GetPostByID(tx, id)
+		if err != nil {
+			return err
+		}
+		updates := map[string]interface{}{
+			"title":        result.Title,
+			"content_md":   rawMD,
+			"content_html": result.HTML,
+			"toc_json":     result.TOCJSON,
+		}
+		if err := tx.Model(post).Updates(updates).Error; err != nil {
+			return err
+		}
+
+		tags, err := EnsureTags(tx, result.Tags)
+		if err != nil {
+			return err
+		}
+		if err := tx.Model(post).Association("Tags").Replace(tags); err != nil {
+			return err
+		}
+		syncFTS(tx, id, result.Title, rawMD)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return GetPostByID(db, id)
+}
+
 // DeletePost removes a post, its tag associations, and its uploaded images.
 func DeletePost(db *gorm.DB, id uint) error {
 	var post model.Post
