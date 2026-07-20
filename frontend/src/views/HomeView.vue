@@ -1,20 +1,19 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import api from '../utils/api'
-import { usePostsStore } from '../stores/posts'
-import PostCard from '../components/PostCard.vue'
 import GradientButton from '../components/GradientButton.vue'
-import EmptyState from '../components/EmptyState.vue'
 import { useSiteAvatar } from '../composables/useSiteAvatar'
 import { useSiteTitle } from '../composables/useSiteTitle'
 
-const postStore = usePostsStore()
-const { siteAvatar } = useSiteAvatar()
+const { siteAvatar, isDefaultAvatar } = useSiteAvatar()
 const { siteTitle } = useSiteTitle()
 
 interface P { id: number; text: string; x: number; y: number; c: string; s: number; vx: number; vy: number; o: number }
+interface Poem { title: string; content: string[]; author: string; dynasty: string }
 const particles = ref<P[]>([])
 const ready = ref(false)
+const poem = ref<Poem | null>(null)
+const poemLoading = ref(false)
 let raf = 0
 let quotePool: string[] = []
 
@@ -28,7 +27,7 @@ function randomColor() {
 }
 
 onMounted(async () => {
-  postStore.fetchPosts(1, '')
+  loadPoem()
 
   try { const r = await api.get('/quotes'); quotePool = r.data.quotes } catch {}
   if (!quotePool.length) quotePool = ['Stay curious', 'Keep learning', 'Code is poetry', 'Build awesome things', 'Think different', 'Simplicity wins']
@@ -78,6 +77,16 @@ function animate() {
   raf = requestAnimationFrame(animate)
 }
 
+async function loadPoem() {
+  poemLoading.value = true
+  try {
+    const response = await api.get('/poetry/random')
+    poem.value = response.data.poem
+  } finally {
+    poemLoading.value = false
+  }
+}
+
 </script>
 
 <template>
@@ -113,32 +122,40 @@ function animate() {
         </div>
         <div class="w-56 h-56 md:w-80 md:h-80 shrink-0">
           <div class="w-full h-full rounded-full overflow-hidden border-8 border-white/60 dark:border-slate-800/60 shadow-2xl bg-gray-100 dark:bg-slate-800">
-            <img :src="siteAvatar" alt="site avatar" class="w-full h-full object-cover" />
+            <img :src="siteAvatar" alt="site avatar" class="h-full w-full" :class="isDefaultAvatar ? 'object-contain p-5' : 'object-cover'" />
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Latest posts -->
-    <section>
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100">Latest Posts</h2>
-        <router-link to="/posts" class="text-sm font-semibold text-brand-600 dark:text-brand-400 hover:underline">View all →</router-link>
+    <!-- Daily poem -->
+    <section class="border-y border-gray-200 py-10 dark:border-white/10 md:py-14">
+      <div class="mb-8 flex items-center justify-between gap-4">
+        <div>
+          <p class="mb-1 text-sm font-medium text-slate-400 dark:text-slate-500">片刻清欢</p>
+          <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100">每日一诗</h2>
+        </div>
+        <button
+          type="button"
+          :disabled="poemLoading"
+          title="换一首"
+          class="inline-flex h-9 items-center gap-2 px-3 text-sm font-medium text-slate-500 transition-colors hover:text-brand-600 disabled:opacity-50 dark:text-slate-400 dark:hover:text-brand-400"
+          @click="loadPoem"
+        >
+          <svg class="h-4 w-4" :class="poemLoading ? 'animate-spin' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 11a8.1 8.1 0 00-15.5-2M4 4v5h5m-5 4a8.1 8.1 0 0015.5 2M20 20v-5h-5"/></svg>
+          换一首
+        </button>
       </div>
 
-      <div v-if="postStore.loading" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div v-for="i in 6" :key="i" class="h-48 rounded-2xl bg-gray-200 dark:bg-white/5 animate-pulse"></div>
+      <div v-if="poem" class="mx-auto max-w-3xl text-center">
+        <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100">《{{ poem.title }}》</h3>
+        <p class="mt-2 text-sm text-slate-400 dark:text-slate-500">{{ poem.dynasty }} · {{ poem.author }}</p>
+        <div class="mt-7 space-y-2 text-lg leading-9 text-slate-600 dark:text-slate-300 md:text-xl">
+          <p v-for="(line, index) in poem.content" :key="index">{{ line }}</p>
+        </div>
       </div>
 
-      <div v-else-if="postStore.posts.length" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <PostCard v-for="post in postStore.posts.slice(0, 6)" :key="post.id" :post="post" />
-      </div>
-
-      <EmptyState v-else icon="sad" title="No posts yet" description="Upload your first markdown post in admin.">
-        <router-link to="/admin" class="mt-4">
-          <GradientButton>Go to admin</GradientButton>
-        </router-link>
-      </EmptyState>
+      <div v-else class="h-48 animate-pulse bg-white/40 dark:bg-white/5"></div>
     </section>
   </div>
 </template>

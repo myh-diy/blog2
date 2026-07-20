@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { useSiteAvatar } from '../composables/useSiteAvatar'
-const { siteAvatar } = useSiteAvatar()
+const { siteAvatar, isDefaultAvatar } = useSiteAvatar()
 </script>
 
 <template>
   <div class="hidden xl:block fixed right-4 top-24 bottom-24 w-20 pointer-events-none z-0">
     <!-- Small floating site avatar -->
     <div class="absolute -top-1 -right-1 w-16 h-16 rounded-full overflow-hidden border-4 border-white dark:border-slate-800 shadow-lg bg-gray-100 dark:bg-slate-800 animate-bounce" style="animation-duration: 3.5s;">
-      <img :src="siteAvatar" alt="site avatar" class="w-full h-full object-cover" />
+      <img :src="siteAvatar" alt="site avatar" class="h-full w-full" :class="isDefaultAvatar ? 'object-contain p-1' : 'object-cover'" />
     </div>
 
     <!-- Stars -->

@@ -87,12 +87,13 @@ func UpdatePostContent() gin.HandlerFunc {
 		}
 		var req struct {
 			Content string `json:"content" binding:"required"`
+			Title   string `json:"title"`
 		}
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "markdown content is required"})
 			return
 		}
-		post, err := service.UpdatePostContent(database.DB, uint(id), req.Content)
+		post, err := service.UpdatePostContent(database.DB, uint(id), req.Content, req.Title)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
