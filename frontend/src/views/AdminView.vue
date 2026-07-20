@@ -218,7 +218,7 @@ async function uploadAvatar() {
           </div>
         </div>
         <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-white dark:border-slate-800 shadow-md bg-gray-100 dark:bg-slate-800 flex-shrink-0">
-          <img :src="siteAvatar" alt="site avatar preview" class="w-full h-full object-cover" />
+          <img :src="siteAvatar" alt="site avatar preview" class="h-full w-full" :class="isDefaultAvatar ? 'object-contain p-3' : 'object-cover'" />
         </div>
       </div>
     </div>

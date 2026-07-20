@@ -7,6 +7,7 @@ type Config struct {
 	DBPath      string
 	JWTSecret   string
 	ExporterURL string
+	PoetryURL   string
 }
 
 func Load() Config {
@@ -15,6 +16,7 @@ func Load() Config {
 		DBPath:      getEnv("DB_PATH", "./blog.db"),
 		JWTSecret:   getEnv("JWT_SECRET", "change-me-in-production"),
 		ExporterURL: getEnv("EXPORTER_METRICS_URL", "http://127.0.0.1:9101/metrics"),
+		PoetryURL:   getEnv("POETRY_API_URL", "http://127.0.0.1:1279/api/poems/random?lang=zh-Hans"),
 	}
 }
 

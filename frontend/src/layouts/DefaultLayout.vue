@@ -65,7 +65,10 @@ const navLinks = [
 
     <footer class="relative z-10 border-t border-gray-200/50 dark:border-white/5">
       <div class="max-w-6xl mx-auto px-4 py-6 text-center text-xs text-slate-400 dark:text-slate-500">
-        {{ siteTitle }}
+        <p>{{ siteTitle }}</p>
+        <a href="https://go.dev/blog/gopher" target="_blank" rel="noreferrer" class="mt-1 inline-block hover:text-brand-500">
+          Go Gopher by Renée French, CC BY 4.0
+        </a>
       </div>
     </footer>
   </div>

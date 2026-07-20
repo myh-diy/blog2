@@ -128,13 +128,18 @@ func UpdatePost(db *gorm.DB, id uint, updates map[string]interface{}) (*model.Po
 
 // UpdatePostContent reparses edited Markdown and updates its rendered fields
 // in one transaction so readers never see a partially updated post.
-func UpdatePostContent(db *gorm.DB, id uint, rawMD string) (*model.Post, error) {
+func UpdatePostContent(db *gorm.DB, id uint, rawMD, title string) (*model.Post, error) {
 	if strings.TrimSpace(rawMD) == "" {
 		return nil, fmt.Errorf("markdown content is required")
 	}
 	result, err := parser.ParseMarkdown([]byte(rawMD))
 	if err != nil {
 		return nil, err
+	}
+	if strings.TrimSpace(title) == "" {
+		title = result.Title
+	} else {
+		title = strings.TrimSpace(title)
 	}
 
 	err = db.Transaction(func(tx *gorm.DB) error {
@@ -143,7 +148,7 @@ func UpdatePostContent(db *gorm.DB, id uint, rawMD string) (*model.Post, error) 
 			return err
 		}
 		updates := map[string]interface{}{
-			"title":        result.Title,
+			"title":        title,
 			"content_md":   rawMD,
 			"content_html": result.HTML,
 			"toc_json":     result.TOCJSON,
@@ -159,7 +164,7 @@ func UpdatePostContent(db *gorm.DB, id uint, rawMD string) (*model.Post, error) 
 		if err := tx.Model(post).Association("Tags").Replace(tags); err != nil {
 			return err
 		}
-		syncFTS(tx, id, result.Title, rawMD)
+		syncFTS(tx, id, title, rawMD)
 		return nil
 	})
 	if err != nil {
