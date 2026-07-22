@@ -30,7 +30,8 @@ WORKDIR /app
 COPY --from=backend-builder /app/blog-server .
 COPY --from=exporter-builder /app/mini-node-exporter .
 COPY docker-entrypoint.sh .
-RUN mkdir -p /app/uploads
+COPY config.yml .
+RUN mkdir -p /app/uploads /app/data
 RUN chmod +x /app/docker-entrypoint.sh
 EXPOSE 8080 9101
 VOLUME ["/app/uploads", "/app/data"]
@@ -40,5 +41,4 @@ ENV JWT_SECRET=change-me-in-production
 ENV GIN_MODE=release
 ENV EXPORTER_ADDR=:9101
 ENV EXPORTER_METRICS_URL=http://127.0.0.1:9101/metrics
-ENV POETRY_API_URL=http://127.0.0.1:1279/api/poems/random?lang=zh-Hans
 CMD ["./docker-entrypoint.sh"]

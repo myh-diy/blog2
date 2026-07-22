@@ -9,7 +9,15 @@ services:
       - blog-data:/app/data
     environment:
       - JWT_SECRET=your-random-secret-here
+      - ADMIN_PASSWORD=change-this-password
+      - PUBLIC_URL=http://localhost:8080
       - EXPORTER_METRICS_URL=http://127.0.0.1:9101/metrics
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
 
 volumes:

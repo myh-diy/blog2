@@ -20,12 +20,15 @@ const posts = ref<Post[]>([])
 const loading = ref(true)
 const quotes = ref<{ id: number; text: string; created_at: string }[]>([])
 const newQuote = ref('')
+const backupLoading = ref(false)
+const revisionsPostID = ref<number | null>(null)
+const revisions = ref<{ id: number; title: string; created_at: string }[]>([])
 
 onMounted(() => { loadPosts(); loadQuotes() })
 
 async function loadPosts() {
   loading.value = true
-  try { const r = await api.get('/posts', { params: { per_page: 100 } }); posts.value = r.data.posts }
+  try { const r = await api.get('/admin/posts'); posts.value = r.data.posts }
   finally { loading.value = false }
 }
 async function loadQuotes() {
@@ -50,12 +53,14 @@ const editingPost = ref<Post | null>(null)
 const editTags = ref('')
 const editTitle = ref('')
 const editCoverFile = ref<File | null>(null)
+const editPublished = ref(true)
 
 function startEdit(post: Post) {
   editingPost.value = post
   editTags.value = post.tags.map(t => t.name).join(', ')
   editTitle.value = post.title
   editCoverFile.value = null
+  editPublished.value = post.published
 }
 function onEditCoverChange(e: Event) {
   const target = e.target as HTMLInputElement
@@ -68,6 +73,7 @@ async function saveEdit() {
   const tags = editTags.value.split(',').map(t => t.trim()).filter(Boolean)
   const form = new FormData()
   form.append('title', editTitle.value.trim())
+  form.append('published', String(editPublished.value))
   tags.forEach(t => form.append('tags[]', t))
   if (editCoverFile.value) form.append('cover_image', editCoverFile.value)
   await api.put(`/admin/posts/${editingPost.value.id}`, form, {
@@ -78,6 +84,38 @@ async function saveEdit() {
   await loadPosts()
 }
 function cancelEdit() { editingPost.value = null }
+
+async function downloadBackup() {
+  backupLoading.value = true
+  try {
+    const response = await api.get('/admin/backup', { responseType: 'blob' })
+    const url = URL.createObjectURL(response.data)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `blog-backup-${new Date().toISOString().slice(0, 10)}.zip`
+    link.click()
+    URL.revokeObjectURL(url)
+  } finally {
+    backupLoading.value = false
+  }
+}
+
+async function toggleRevisions(postID: number) {
+  if (revisionsPostID.value === postID) {
+    revisionsPostID.value = null
+    return
+  }
+  const response = await api.get(`/admin/posts/${postID}/revisions`)
+  revisions.value = response.data.revisions || []
+  revisionsPostID.value = postID
+}
+
+async function restoreRevision(postID: number, revisionID: number) {
+  if (!confirm('Restore this version? The current version will also be saved.')) return
+  await api.post(`/admin/posts/${postID}/revisions/${revisionID}/restore`)
+  revisionsPostID.value = null
+  await loadPosts()
+}
 
 function logout() { auth.logout(); router.push('/login') }
 
@@ -146,7 +184,10 @@ async function uploadAvatar() {
         <h1 class="text-3xl font-black text-slate-800 dark:text-slate-100 mb-1">Admin</h1>
         <p class="text-sm text-slate-400 dark:text-slate-500">Manage your blog</p>
       </div>
-      <button @click="logout" class="text-sm font-medium text-red-500 hover:text-red-600 transition-colors">Logout</button>
+      <div class="flex items-center gap-3">
+        <button @click="downloadBackup" :disabled="backupLoading" class="text-sm font-medium text-brand-600 disabled:opacity-50 dark:text-brand-400">{{ backupLoading ? 'Preparing...' : 'Download backup' }}</button>
+        <button @click="logout" class="text-sm font-medium text-red-500 hover:text-red-600 transition-colors">Logout</button>
+      </div>
     </div>
 
     <!-- Upload -->
@@ -271,28 +312,34 @@ async function uploadAvatar() {
           <thead><tr class="border-b border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-white/5">
             <th class="text-left py-3 px-4 font-semibold text-slate-500 dark:text-slate-400">Title</th>
             <th class="text-left py-3 px-4 font-semibold text-slate-500 dark:text-slate-400 w-40">MD File</th>
+            <th class="text-left py-3 px-4 font-semibold text-slate-500 dark:text-slate-400 w-24">Status</th>
             <th class="text-left py-3 px-4 font-semibold text-slate-500 dark:text-slate-400 w-28">Date</th>
-            <th class="text-right py-3 px-4 font-semibold text-slate-500 dark:text-slate-400 w-32">Actions</th>
+            <th class="text-right py-3 px-4 font-semibold text-slate-500 dark:text-slate-400 w-44">Actions</th>
           </tr></thead>
           <tbody class="divide-y divide-gray-100 dark:divide-white/5">
             <template v-for="post in posts" :key="post.id">
               <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                 <td class="py-3 px-4"><router-link :to="`/post/${post.slug}`" class="font-medium text-slate-800 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">{{ post.title }}</router-link></td>
                 <td class="py-3 px-4 text-slate-400 dark:text-slate-500 font-mono text-xs">{{ post.source_file || '-' }}</td>
+                <td class="py-3 px-4"><span :class="post.published ? 'text-green-600' : 'text-amber-600'" class="text-xs font-semibold">{{ post.published ? 'Published' : 'Draft' }}</span></td>
                 <td class="py-3 px-4 text-slate-400 dark:text-slate-500 font-mono text-xs">{{ post.created_at.split('T')[0] }}</td>
                 <td class="py-3 px-4 text-right space-x-2">
                   <button @click="startEdit(post)" class="text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline transition-colors">Edit</button>
+                  <button @click="toggleRevisions(post.id)" class="text-xs font-medium text-slate-500 hover:text-brand-600 transition-colors">History</button>
                   <button @click="deletePost(post.id)" class="text-xs font-medium text-red-500 hover:text-red-600 transition-colors">Delete</button>
                 </td>
               </tr>
               <!-- Edit row -->
               <tr v-if="editingPost?.id === post.id">
-                <td colspan="4" class="px-4 py-3 bg-gray-50 dark:bg-white/5">
+                <td colspan="5" class="px-4 py-3 bg-gray-50 dark:bg-white/5">
                   <div class="flex flex-col gap-3">
                     <div>
                       <label class="text-xs font-semibold text-slate-500 block mb-1">Title</label>
                       <input v-model="editTitle" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30" />
                     </div>
+                    <label class="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300">
+                      <input v-model="editPublished" type="checkbox" class="h-4 w-4 accent-brand-500" /> Published
+                    </label>
                     <div>
                       <label class="text-xs font-semibold text-slate-500 block mb-1">Tags (comma separated)</label>
                       <input v-model="editTags" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30" />
@@ -306,6 +353,15 @@ async function uploadAvatar() {
                       <button @click="saveEdit" class="px-3 py-1.5 text-xs font-medium bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-all">Save</button>
                       <button @click="cancelEdit" class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors">Cancel</button>
                     </div>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="revisionsPostID === post.id">
+                <td colspan="5" class="bg-gray-50 px-4 py-3 dark:bg-white/5">
+                  <p v-if="!revisions.length" class="text-xs text-slate-400">No previous versions yet.</p>
+                  <div v-for="revision in revisions" :key="revision.id" class="flex items-center justify-between border-b border-gray-200 py-2 last:border-0 dark:border-white/10">
+                    <div><p class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ revision.title }}</p><time class="text-xs text-slate-400">{{ new Date(revision.created_at).toLocaleString() }}</time></div>
+                    <button @click="restoreRevision(post.id, revision.id)" class="text-xs font-semibold text-brand-600 dark:text-brand-400">Restore</button>
                   </div>
                 </td>
               </tr>

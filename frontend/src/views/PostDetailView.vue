@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePostsStore, type Post } from '../stores/posts'
 import { useAuthStore } from '../stores/auth'
 import api from '../utils/api'
 import MarkdownRenderer from '../components/MarkdownRenderer.vue'
 import TOCSidebar from '../components/TOCSidebar.vue'
+import { useSiteTitle } from '../composables/useSiteTitle'
 
 const route = useRoute()
 const store = usePostsStore()
 const auth = useAuthStore()
+const { siteTitle } = useSiteTitle()
 const post = ref<Post | null>(null)
 const isEditing = ref(false)
 const editTitle = ref('')
@@ -19,10 +21,37 @@ const saving = ref(false)
 const exporting = ref(false)
 const actionError = ref('')
 const markdownInput = ref<HTMLInputElement | null>(null)
+const readingProgress = ref(0)
 
 onMounted(async () => {
+	window.addEventListener('scroll', updateReadingProgress, { passive: true })
   post.value = await store.fetchPost(route.params.slug as string)
+  if (post.value) {
+    document.title = `${post.value.title} | ${siteTitle.value}`
+    setMetaDescription(post.value.content_html)
+  }
 })
+
+onUnmounted(() => {
+	window.removeEventListener('scroll', updateReadingProgress)
+  document.title = siteTitle.value
+})
+
+function updateReadingProgress() {
+  const scrollable = document.documentElement.scrollHeight - window.innerHeight
+  readingProgress.value = scrollable > 0 ? Math.min(100, Math.max(0, window.scrollY / scrollable * 100)) : 0
+}
+
+function setMetaDescription(html: string) {
+  const text = new DOMParser().parseFromString(html, 'text/html').body.textContent?.replace(/\s+/g, ' ').trim() || ''
+  let meta = document.querySelector<HTMLMetaElement>('meta[name="description"]')
+  if (!meta) {
+    meta = document.createElement('meta')
+    meta.name = 'description'
+    document.head.appendChild(meta)
+  }
+  meta.content = text.slice(0, 160)
+}
 
 async function startEditing() {
   if (!post.value || !auth.isAuthenticated) return
@@ -119,6 +148,7 @@ async function exportMarkdown() {
 </script>
 
 <template>
+  <div class="fixed left-0 top-16 z-50 h-0.5 bg-brand-500 transition-[width]" :style="{ width: `${readingProgress}%` }" aria-hidden="true"></div>
   <div v-if="!post" class="flex justify-center py-20">
     <div class="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent"></div>
   </div>

@@ -12,6 +12,7 @@ export interface Post {
   toc: string
   created_at: string
   updated_at: string
+  published: boolean
   tags: { id: number; name: string }[]
 }
 
