@@ -9,11 +9,12 @@ const { siteAvatar, isDefaultAvatar } = useSiteAvatar()
 const { siteTitle } = useSiteTitle()
 
 interface P { id: number; text: string; x: number; y: number; c: string; s: number; vx: number; vy: number; o: number }
-interface Poem { title: string; content: string[]; author: string; dynasty: string }
+interface Poem { content: string; origin: string; author: string; category?: string }
 const particles = ref<P[]>([])
 const ready = ref(false)
 const poem = ref<Poem | null>(null)
 const poemLoading = ref(false)
+const poemError = ref(false)
 let raf = 0
 let quotePool: string[] = []
 
@@ -79,9 +80,17 @@ function animate() {
 
 async function loadPoem() {
   poemLoading.value = true
+  poemError.value = false
   try {
-    const response = await api.get('/poetry/random')
-    poem.value = response.data.poem
+    const response = await fetch('https://v1.jinrishici.com/all.json', { cache: 'no-store' })
+    if (!response.ok) throw new Error(`Poetry API returned ${response.status}`)
+
+    const data = await response.json() as Poem
+    if (!data.content || !data.origin || !data.author) throw new Error('Poetry API returned invalid data')
+    poem.value = data
+  } catch {
+    poem.value = null
+    poemError.value = true
   } finally {
     poemLoading.value = false
   }
@@ -148,14 +157,15 @@ async function loadPoem() {
       </div>
 
       <div v-if="poem" class="mx-auto max-w-3xl text-center">
-        <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100">《{{ poem.title }}》</h3>
-        <p class="mt-2 text-sm text-slate-400 dark:text-slate-500">{{ poem.dynasty }} · {{ poem.author }}</p>
-        <div class="mt-7 space-y-2 text-lg leading-9 text-slate-600 dark:text-slate-300 md:text-xl">
-          <p v-for="(line, index) in poem.content" :key="index">{{ line }}</p>
-        </div>
+        <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100">《{{ poem.origin }}》</h3>
+        <p class="mt-2 text-sm text-slate-400 dark:text-slate-500">{{ poem.author }}</p>
+        <p class="mt-7 text-lg leading-9 text-slate-600 dark:text-slate-300 md:text-xl">{{ poem.content }}</p>
       </div>
 
-      <div v-else class="h-48 animate-pulse bg-white/40 dark:bg-white/5"></div>
+      <div v-else-if="poemLoading" class="h-32 animate-pulse bg-white/40 dark:bg-white/5"></div>
+      <div v-else-if="poemError" class="flex h-32 items-center justify-center text-sm text-slate-400 dark:text-slate-500">
+        暂时未能取到诗句，请稍后重试
+      </div>
     </section>
   </div>
 </template>

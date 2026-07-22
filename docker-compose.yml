@@ -10,15 +10,6 @@ services:
     environment:
       - JWT_SECRET=your-random-secret-here
       - EXPORTER_METRICS_URL=http://127.0.0.1:9101/metrics
-      - POETRY_API_URL=http://poetry:1279/api/poems/random?lang=zh-Hans
-    depends_on:
-      - poetry
-    restart: unless-stopped
-
-  poetry:
-    image: palemoky/chinese-poetry-api:latest
-    expose:
-      - "1279"
     restart: unless-stopped
 
 volumes:
