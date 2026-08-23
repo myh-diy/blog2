@@ -4,18 +4,28 @@ import { useRoute } from 'vue-router'
 import { BookOpen, LogIn, PenLine, Search } from '@lucide/vue'
 import ThemeToggle from '../components/ThemeToggle.vue'
 import DisplayModeToggle from '../components/DisplayModeToggle.vue'
+import ClassicThemeSelector from '../components/ClassicThemeSelector.vue'
 import PageDecorations from '../components/PageDecorations.vue'
 import { useBackgroundImage } from '../composables/useBackgroundImage'
 import { useDisplayMode } from '../composables/useDisplayMode'
+import { useClassicTheme } from '../composables/useClassicTheme'
 import { useSiteTitle } from '../composables/useSiteTitle'
 import { useAuthStore } from '../stores/auth'
+import { generateCSSVars } from '../utils/color'
 import api from '../utils/api'
 
 const route = useRoute()
 const { backgroundImage, bgOpacity } = useBackgroundImage()
 const { siteTitle } = useSiteTitle()
 const { displayMode } = useDisplayMode()
+const { currentTheme } = useClassicTheme()
 const isMinimal = computed(() => displayMode.value === 'minimal')
+const classicBackground = computed(() => currentTheme.value.background || backgroundImage.value)
+const classicOverlayOpacity = computed(() => currentTheme.value.background ? currentTheme.value.overlay : bgOpacity.value)
+const layoutThemeStyle = computed(() => {
+  if (isMinimal.value || !currentTheme.value.brand || !currentTheme.value.accent) return undefined
+  return generateCSSVars(currentTheme.value.brand, currentTheme.value.accent)
+})
 const auth = useAuthStore()
 const tags = ref<{ name: string; count: number }[]>([])
 
@@ -39,17 +49,20 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="relative min-h-screen flex flex-col">
+  <div class="relative min-h-screen flex flex-col" :style="layoutThemeStyle">
     <!-- Global background image layer -->
     <div
       class="fixed inset-0 z-0 bg-cover bg-center bg-fixed bg-no-repeat transition-all duration-700"
-      :style="{ backgroundImage: !isMinimal && backgroundImage ? `url('${backgroundImage}')` : 'none' }"
+      :style="{
+        backgroundImage: !isMinimal && classicBackground ? `url('${classicBackground}')` : 'none',
+        backgroundPosition: currentTheme.position || 'center center',
+      }"
       aria-hidden="true"
     >
       <div
         class="absolute inset-0 transition-colors"
-        :class="!isMinimal && backgroundImage ? 'bg-white dark:bg-slate-950' : 'bg-gray-50 dark:bg-slate-950'"
-        :style="!isMinimal && backgroundImage ? { opacity: bgOpacity } : undefined"
+        :class="!isMinimal && classicBackground ? 'bg-white dark:bg-slate-950' : 'bg-gray-50 dark:bg-slate-950'"
+        :style="!isMinimal && classicBackground ? { opacity: classicOverlayOpacity } : undefined"
       ></div>
     </div>
     <!-- Navbar -->
@@ -100,6 +113,8 @@ onMounted(async () => {
         </router-link>
       </div>
     </div>
+
+    <ClassicThemeSelector v-if="!isMinimal" />
 
     <main class="relative z-10 mx-auto w-full max-w-[1200px] flex-1 px-3 py-4 sm:px-4 sm:py-5">
       <PageDecorations v-if="!isMinimal" />

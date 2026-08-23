@@ -69,6 +69,7 @@ frontend/
 - `useBackgroundImage`：背景图片和遮罩透明度。
 - `useCustomTheme`：颜色预设。
 - `useDisplayMode`：经典版/简洁版。
+- `useClassicTheme`：经典版角色主题及本地选择状态。
 
 站点设置优先从 `/api/settings` 读取，并以 `localStorage` 作为前端缓存。管理员修改后通过 `PUT /api/admin/settings` 保存到 SQLite。
 
@@ -155,6 +156,8 @@ tags:
 - `HomeView.vue`：只负责选择实际首页组件。
 
 初次访问默认进入资讯版。切换状态保存在 `localStorage` 的 `display-mode`，值为 `classic` 或 `minimal`；用户主动切换后会记忆选择。资讯版隐藏全局背景装饰，经典版不再提供 8000 端口浮动入口。
+
+经典版额外提供爱弥斯、守岸人、清霄和自定义四个主题选项。前三个主题分别使用本地角色背景与独立主色，选择保存在 `localStorage` 的 `classic-theme`；自定义主题继续使用管理员在后台上传的背景和配色。
 
 首页古诗直接请求 `https://v1.jinrishici.com/all.json`。该服务不可用时不会阻塞文章页面。
 
