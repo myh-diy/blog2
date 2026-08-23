@@ -4,6 +4,8 @@ import (
 	"blog-backend/config"
 	"blog-backend/internal/model"
 	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
@@ -13,8 +15,11 @@ import (
 var DB *gorm.DB
 
 func Init(cfg config.Config) {
+	if err := os.MkdirAll(filepath.Dir(cfg.Database.Path), 0755); err != nil {
+		log.Fatalf("Failed to create database directory: %v", err)
+	}
 	var err error
-	DB, err = gorm.Open(sqlite.Open(cfg.DBPath), &gorm.Config{
+	DB, err = gorm.Open(sqlite.Open(cfg.Database.Path), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Warn),
 	})
 	if err != nil {
@@ -24,6 +29,7 @@ func Init(cfg config.Config) {
 	if err := DB.AutoMigrate(
 		&model.User{},
 		&model.Post{},
+		&model.PostRevision{},
 		&model.Tag{},
 		&model.Quote{},
 		&model.Setting{},

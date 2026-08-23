@@ -11,9 +11,18 @@ type Post struct {
 	ContentMD   string    `gorm:"type:text;not null" json:"-"`
 	ContentHTML string    `gorm:"type:text;not null" json:"content_html"`
 	TOCJSON     string    `gorm:"type:text" json:"toc"`
+	Published   bool      `gorm:"not null;default:true;index" json:"published"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 	Tags        []Tag     `gorm:"many2many:post_tags;" json:"tags"`
+}
+
+type PostRevision struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	PostID    uint      `gorm:"not null;index" json:"post_id"`
+	Title     string    `gorm:"size:500;not null" json:"title"`
+	ContentMD string    `gorm:"type:text;not null" json:"-"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type TimelineEntry struct {

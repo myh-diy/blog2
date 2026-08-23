@@ -9,8 +9,33 @@ const uploading = ref(false)
 const message = ref('')
 const status = ref<'idle' | 'uploading' | 'success' | 'error'>('idle')
 const fileNames = ref<string[]>([])
+const fileInput = ref<HTMLInputElement | null>(null)
 
-const hasMd = computed(() => fileNames.value.some(f => f.endsWith('.md')))
+const hasMd = computed(() => fileNames.value.some(isMarkdownFile))
+
+function isMarkdownFile(name: string) {
+  const lower = name.toLowerCase()
+  return lower.endsWith('.md') || lower.endsWith('.markdown')
+}
+
+function openFilePicker() {
+  if (status.value === 'idle' && !uploading.value) fileInput.value?.click()
+}
+
+async function onLocalFiles(event: Event) {
+  const input = event.target as HTMLInputElement
+  const files = Array.from(input.files || [])
+  input.value = ''
+  if (!files.length) return
+
+  fileNames.value = files.map(file => file.name)
+  if (!hasMd.value) {
+    message.value = 'Please select a Markdown file (.md or .markdown)'
+    status.value = 'error'
+    return
+  }
+  await doUpload(files)
+}
 
 function onDragOver(e: DragEvent) { e.preventDefault(); dragging.value = true }
 function onDragLeave() { dragging.value = false }
@@ -49,7 +74,7 @@ async function onDrop(e: DragEvent) {
   fileNames.value = files.map(f => (f as any).webkitRelativePath || f.name)
 
   if (!hasMd.value) {
-    message.value = 'No .md file found in dropped files'
+    message.value = 'No Markdown file found in dropped files'
     status.value = 'error'
     return
   }
@@ -81,8 +106,8 @@ async function doUpload(files: File[]) {
       fd.append('file', f, relPath)
     }
     await api.post('/admin/upload', fd)
-    const mdName = files.find(f => f.name.endsWith('.md'))?.name || ''
-    const imgCount = files.filter(f => !f.name.endsWith('.md')).length
+    const mdName = files.find(f => isMarkdownFile(f.name))?.name || ''
+    const imgCount = files.filter(f => !isMarkdownFile(f.name)).length
     message.value = imgCount > 0 ? `${mdName} + ${imgCount} image(s)` : mdName
     status.value = 'success'
     emit('uploaded')
@@ -107,7 +132,17 @@ function retry() {
         ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20 scale-[1.01]'
         : 'border-gray-300 dark:border-white/10 bg-white dark:bg-slate-900 hover:border-brand-400 dark:hover:border-brand-600 hover:bg-gray-50 dark:hover:bg-white/5'
     ]"
+    @click="openFilePicker"
     @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop">
+
+    <input
+      ref="fileInput"
+      type="file"
+      multiple
+      accept=".md,.markdown,text/markdown,image/*"
+      class="hidden"
+      @change="onLocalFiles"
+    />
 
     <!-- Idle -->
     <div v-if="status === 'idle'" class="flex flex-col items-center gap-3">
@@ -115,7 +150,10 @@ function retry() {
         <KawaiiIcon name="upload" />
       </div>
       <p class="text-slate-600 dark:text-slate-300 font-medium">Drop <code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 text-brand-600 dark:text-brand-400 text-sm">.md</code> + images here</p>
-      <p class="text-xs text-slate-400">Supports folders — directory structure is preserved</p>
+      <button type="button" class="bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-600" @click.stop="openFilePicker">
+        Select local files
+      </button>
+      <p class="text-xs text-slate-400">Select Markdown and its images together, or drop a complete folder</p>
     </div>
 
     <!-- Uploading -->

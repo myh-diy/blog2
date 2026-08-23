@@ -32,7 +32,7 @@ const items = computed<TOCItem[]>(() => {
 
 <template>
   <nav v-if="items.length" aria-label="文章目录">
-    <h3 class="mb-4 text-xs font-bold uppercase text-slate-400 dark:text-slate-500">目录</h3>
+    <h3 class="mb-4 text-sm font-semibold text-slate-900 dark:text-white">文章目录</h3>
     <ul class="border-l border-gray-200 text-sm dark:border-white/10">
       <li v-for="item in items" :key="item.id">
         <a

@@ -21,15 +21,23 @@ import (
 var staticFiles embed.FS
 
 func main() {
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
+	gin.SetMode(cfg.Server.Mode)
 	database.Init(cfg)
 
-	if err := service.CreateDefaultUser(database.DB); err != nil {
+	if err := service.CreateDefaultUser(database.DB, cfg.Auth.AdminUsername, cfg.Auth.AdminPassword); err != nil {
 		log.Fatalf("Failed to create default user: %v", err)
 	}
-	log.Println("Default admin user ensured (username: admin, password: admin)")
+	if cfg.Auth.JWTSecret == "change-me-in-production" || cfg.Auth.AdminPassword == "admin" {
+		log.Println("WARNING: insecure default credentials are enabled; override JWT_SECRET and ADMIN_PASSWORD")
+	}
+	log.Printf("Default admin user ensured (username: %s)", cfg.Auth.AdminUsername)
 
 	r := gin.Default()
+	r.Use(handler.SecurityHeaders())
 
 	// Public routes
 	r.GET("/api/health", func(c *gin.Context) {
@@ -46,17 +54,24 @@ func main() {
 	r.Static("/uploads", "./uploads")
 	r.GET("/api/quotes", handler.GetQuotes())
 	r.GET("/api/settings", handler.GetSettings())
+	r.GET("/rss.xml", handler.RSSFeed(cfg.Server.PublicURL))
+	r.GET("/sitemap.xml", handler.Sitemap(cfg.Server.PublicURL))
 
 	// Admin routes (protected)
 	admin := r.Group("/api/admin")
-	admin.Use(auth.AuthMiddleware(cfg.JWTSecret))
+	admin.Use(auth.AuthMiddleware(cfg.Auth.JWTSecret))
+	admin.Use(handler.LimitRequestBody(cfg.Storage.MaxUploadMB))
 	{
-		admin.GET("/system/metrics", handler.GetSystemMetrics(cfg.ExporterURL))
+		admin.GET("/system/metrics", handler.GetSystemMetrics(cfg.Exporter.MetricsURL))
+		admin.GET("/backup", handler.DownloadBackup(cfg))
+		admin.GET("/posts", handler.ListAdminPosts())
 		admin.POST("/upload", handler.UploadPost())
 		admin.POST("/upload-image", handler.UploadImage())
 		admin.GET("/posts/:id/source", handler.GetPostSource())
 		admin.PUT("/posts/:id/content", handler.UpdatePostContent())
 		admin.PUT("/posts/:id", handler.UpdatePost())
+		admin.GET("/posts/:id/revisions", handler.ListPostRevisions())
+		admin.POST("/posts/:id/revisions/:revisionID/restore", handler.RestorePostRevision())
 		admin.DELETE("/posts/:id", handler.DeletePost())
 		admin.GET("/quotes", handler.ListQuotes())
 		admin.POST("/quotes", handler.CreateQuote())
@@ -95,6 +110,8 @@ func main() {
 		c.Data(http.StatusOK, "text/html; charset=utf-8", indexHTML)
 	})
 
-	fmt.Println("Server starting on :" + cfg.Port)
-	r.Run(":" + cfg.Port)
+	fmt.Println("Server starting on :" + cfg.Server.Port)
+	if err := r.Run(":" + cfg.Server.Port); err != nil {
+		log.Fatalf("Server failed: %v", err)
+	}
 }

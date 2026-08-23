@@ -5,6 +5,7 @@ import api from '../utils/api'
 import PostCard from '../components/PostCard.vue'
 import EmptyState from '../components/EmptyState.vue'
 import GradientButton from '../components/GradientButton.vue'
+import { Search, Sparkles } from '@lucide/vue'
 import type { Post } from '../stores/posts'
 
 const route = useRoute()
@@ -20,26 +21,25 @@ async function search() {
   loading.value = true
   try {
     const r = await api.get('/search', { params: { q: q.value } })
-    results.value = r.data.posts
+    results.value = r.data.posts ?? []
     total.value = r.data.total
   } finally { loading.value = false }
 }
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto">
-    <div class="text-center mb-10">
-      <h1 class="text-3xl font-black text-slate-800 dark:text-slate-100 mb-2">Search</h1>
-      <p class="text-slate-400 dark:text-slate-500 text-sm">Find posts by title, content, or tags</p>
-    </div>
-
-    <form @submit.prevent="search" class="flex gap-3 mb-10">
+  <div class="mx-auto max-w-4xl">
+    <section class="surface overflow-hidden">
+      <header class="surface-header">
+        <h1 class="page-title">搜索文章</h1>
+        <p class="mt-1 text-sm text-slate-400">搜索标题与 Markdown 正文</p>
+      </header>
+    <form @submit.prevent="search" class="flex gap-3 border-b border-slate-100 p-5 dark:border-white/10">
       <div class="relative flex-1">
-        <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-        <input v-model="q" placeholder="Search posts..."
-          class="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-white/10 rounded-2xl text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all" />
+        <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" :size="18" />
+        <input v-model="q" placeholder="输入关键词，例如 Go、Vue、Prometheus" class="text-input h-11 pl-10" />
       </div>
-      <GradientButton type="submit">Search</GradientButton>
+      <GradientButton type="submit">搜索</GradientButton>
     </form>
 
     <div v-if="loading" class="flex justify-center py-12">
@@ -47,13 +47,14 @@ async function search() {
     </div>
 
     <template v-else-if="results.length">
-      <p class="text-sm text-slate-400 dark:text-slate-500 mb-6">{{ total }} result(s)</p>
-      <div class="grid md:grid-cols-2 gap-6">
-        <PostCard v-for="post in results" :key="post.id" :post="post" />
+      <p class="border-b border-slate-100 px-5 py-3 text-sm text-slate-400 dark:border-white/10">找到 {{ total }} 篇结果</p>
+      <div>
+        <PostCard v-for="post in results" :key="post.id" :post="post" compact />
       </div>
     </template>
 
-    <EmptyState v-else-if="q" icon="search" title="No results found" :description="`We couldn't find anything for '${q}'. Try a different keyword.`" />
-    <EmptyState v-else icon="search" title="Start typing" description="Enter a keyword to search your posts." />
+    <EmptyState v-else-if="q" icon="search" title="没有找到结果" :description="`没有匹配“${q}”的文章，请换个关键词。`" />
+    <div v-else class="flex min-h-64 flex-col items-center justify-center text-slate-400"><Sparkles :size="32" class="mb-3" /><p class="text-sm">输入关键词开始探索</p></div>
+    </section>
   </div>
 </template>

@@ -56,6 +56,7 @@ func CreatePost(db *gorm.DB, result *parser.ParseResult, rawMD, sourceFile strin
 		ContentMD:   rawMD,
 		ContentHTML: result.HTML,
 		TOCJSON:     result.TOCJSON,
+		Published:   true,
 		CreatedAt:   parsedDate,
 		UpdatedAt:   parsedDate,
 		Tags:        tags,
@@ -76,7 +77,7 @@ func GetPosts(db *gorm.DB, page, perPage int, tag string) ([]model.Post, int64, 
 	var posts []model.Post
 	var total int64
 
-	query := db.Model(&model.Post{}).Preload("Tags")
+	query := db.Model(&model.Post{}).Preload("Tags").Where("posts.published = ?", true)
 	if tag != "" {
 		query = query.Joins("JOIN post_tags ON post_tags.post_id = posts.id").
 			Joins("JOIN tags ON tags.id = post_tags.tag_id").
@@ -94,10 +95,16 @@ func GetPosts(db *gorm.DB, page, perPage int, tag string) ([]model.Post, int64, 
 // GetPostBySlug returns a single post by its URL slug, including associated tags.
 func GetPostBySlug(db *gorm.DB, slug string) (*model.Post, error) {
 	var post model.Post
-	if err := db.Preload("Tags").Where("slug = ?", slug).First(&post).Error; err != nil {
+	if err := db.Preload("Tags").Where("slug = ? AND published = ?", slug, true).First(&post).Error; err != nil {
 		return nil, err
 	}
 	return &post, nil
+}
+
+func GetAllPosts(db *gorm.DB) ([]model.Post, error) {
+	var posts []model.Post
+	err := db.Preload("Tags").Order("created_at DESC").Find(&posts).Error
+	return posts, err
 }
 
 // GetPostByID returns a single post by its primary key, including associated tags.
@@ -147,6 +154,11 @@ func UpdatePostContent(db *gorm.DB, id uint, rawMD, title string) (*model.Post, 
 		if err != nil {
 			return err
 		}
+		if err := tx.Create(&model.PostRevision{
+			PostID: post.ID, Title: post.Title, ContentMD: post.ContentMD,
+		}).Error; err != nil {
+			return err
+		}
 		updates := map[string]interface{}{
 			"title":        title,
 			"content_md":   rawMD,
@@ -173,6 +185,20 @@ func UpdatePostContent(db *gorm.DB, id uint, rawMD, title string) (*model.Post, 
 	return GetPostByID(db, id)
 }
 
+func GetPostRevisions(db *gorm.DB, postID uint) ([]model.PostRevision, error) {
+	var revisions []model.PostRevision
+	err := db.Where("post_id = ?", postID).Order("created_at DESC").Find(&revisions).Error
+	return revisions, err
+}
+
+func RestorePostRevision(db *gorm.DB, postID, revisionID uint) (*model.Post, error) {
+	var revision model.PostRevision
+	if err := db.Where("id = ? AND post_id = ?", revisionID, postID).First(&revision).Error; err != nil {
+		return nil, err
+	}
+	return UpdatePostContent(db, postID, revision.ContentMD, revision.Title)
+}
+
 // DeletePost removes a post, its tag associations, and its uploaded images.
 func DeletePost(db *gorm.DB, id uint) error {
 	var post model.Post
@@ -183,6 +209,7 @@ func DeletePost(db *gorm.DB, id uint) error {
 	deletePostImages(post.ContentHTML)
 	// Clear tag associations then delete
 	db.Model(&post).Association("Tags").Clear()
+	db.Where("post_id = ?", id).Delete(&model.PostRevision{})
 	return db.Unscoped().Delete(&post).Error
 }
 
@@ -192,9 +219,9 @@ func SearchPosts(db *gorm.DB, query string, page, perPage int) ([]model.Post, in
 	var ids []uint
 	var total int64
 
-	db.Raw("SELECT rowid FROM posts_fts WHERE posts_fts MATCH ? ORDER BY rank LIMIT ? OFFSET ?",
+	db.Raw("SELECT posts_fts.rowid FROM posts_fts JOIN posts ON posts.id = posts_fts.rowid WHERE posts_fts MATCH ? AND posts.published = 1 ORDER BY rank LIMIT ? OFFSET ?",
 		query, perPage, (page-1)*perPage).Scan(&ids)
-	db.Raw("SELECT COUNT(*) FROM posts_fts WHERE posts_fts MATCH ?", query).Scan(&total)
+	db.Raw("SELECT COUNT(*) FROM posts_fts JOIN posts ON posts.id = posts_fts.rowid WHERE posts_fts MATCH ? AND posts.published = 1", query).Scan(&total)
 
 	var posts []model.Post
 	if len(ids) > 0 {
@@ -208,7 +235,7 @@ func SearchPosts(db *gorm.DB, query string, page, perPage int) ([]model.Post, in
 // most recent to oldest.
 func GetTimeline(db *gorm.DB) ([]model.TimelineEntry, error) {
 	var posts []model.Post
-	if err := db.Preload("Tags").Order("created_at DESC").Find(&posts).Error; err != nil {
+	if err := db.Preload("Tags").Where("published = ?", true).Order("created_at DESC").Find(&posts).Error; err != nil {
 		return nil, err
 	}
 
@@ -281,7 +308,7 @@ func deletePostImages(html string) {
 // Returns up to `limit` sentences (roughly 20-80 chars each).
 func GetRandomPostQuotes(db *gorm.DB, limit int) []string {
 	var posts []model.Post
-	if err := db.Select("content_md").Find(&posts).Error; err != nil || len(posts) == 0 {
+	if err := db.Select("content_md").Where("published = ?", true).Find(&posts).Error; err != nil || len(posts) == 0 {
 		return nil
 	}
 

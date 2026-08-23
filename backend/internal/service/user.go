@@ -9,18 +9,18 @@ import (
 	"blog-backend/internal/model"
 )
 
-func CreateDefaultUser(db *gorm.DB) error {
+func CreateDefaultUser(db *gorm.DB, username, password string) error {
 	var count int64
 	db.Model(&model.User{}).Count(&count)
 	if count > 0 {
 		return nil
 	}
-	hash, err := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 	user := model.User{
-		Username:     "admin",
+		Username:     username,
 		PasswordHash: string(hash),
 	}
 	return db.Create(&user).Error

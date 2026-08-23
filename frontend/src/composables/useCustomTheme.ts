@@ -16,7 +16,7 @@ export const presets: ThemePreset[] = [
 ]
 
 const STORAGE_KEY = 'theme-preset'
-const DEFAULT_PRESET = 'Sakura'
+const DEFAULT_PRESET = 'Sky'
 
 function findPreset(name: string): ThemePreset {
   return presets.find(p => p.name === name) || presets.find(p => p.name === DEFAULT_PRESET)!

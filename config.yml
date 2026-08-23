@@ -1,0 +1,21 @@
+server:
+  port: "8080"
+  mode: release
+  public_url: http://localhost:8080
+
+database:
+  path: data/blog.db
+
+auth:
+  jwt_secret: change-me-in-production
+  token_ttl_hours: 168
+  admin_username: admin
+  admin_password: admin
+
+exporter:
+  metrics_url: http://127.0.0.1:9101/metrics
+
+storage:
+  upload_dir: uploads
+  backup_dir: data/backups
+  max_upload_mb: 20

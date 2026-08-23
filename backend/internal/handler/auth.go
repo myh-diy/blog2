@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -26,7 +27,7 @@ func Login(cfg config.Config) gin.HandlerFunc {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 			return
 		}
-		token, expiresAt, err := auth.GenerateToken(user.ID, cfg.JWTSecret)
+		token, expiresAt, err := auth.GenerateToken(user.ID, cfg.Auth.JWTSecret, time.Duration(cfg.Auth.TokenTTLHours)*time.Hour)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
 			return

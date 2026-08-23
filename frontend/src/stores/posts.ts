@@ -12,6 +12,7 @@ export interface Post {
   toc: string
   created_at: string
   updated_at: string
+  published: boolean
   tags: { id: number; name: string }[]
 }
 
@@ -24,7 +25,7 @@ export const usePostsStore = defineStore('posts', () => {
     loading.value = true
     try {
       const res = await api.get('/posts', { params: { page, per_page: 10, tag } })
-      posts.value = res.data.posts
+      posts.value = res.data.posts ?? []
       total.value = res.data.total
     } finally {
       loading.value = false

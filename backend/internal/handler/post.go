@@ -32,6 +32,17 @@ func ListPosts() gin.HandlerFunc {
 	}
 }
 
+func ListAdminPosts() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		posts, err := service.GetAllPosts(database.DB)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"posts": posts})
+	}
+}
+
 func GetPost() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		slug := c.Param("slug")
@@ -120,6 +131,9 @@ func UpdatePost() gin.HandlerFunc {
 		if title != "" {
 			updates["title"] = title
 		}
+		if published := c.PostForm("published"); published != "" {
+			updates["published"] = published == "true"
+		}
 
 		if coverFile, err := c.FormFile("cover_image"); err == nil {
 			os.MkdirAll(uploadDir, 0755)
@@ -142,6 +156,39 @@ func UpdatePost() gin.HandlerFunc {
 		post, err := service.UpdatePost(database.DB, uint(id), updates)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"post": post})
+	}
+}
+
+func ListPostRevisions() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		postID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid post id"})
+			return
+		}
+		revisions, err := service.GetPostRevisions(database.DB, uint(postID))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"revisions": revisions})
+	}
+}
+
+func RestorePostRevision() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		postID, err1 := strconv.ParseUint(c.Param("id"), 10, 64)
+		revisionID, err2 := strconv.ParseUint(c.Param("revisionID"), 10, 64)
+		if err1 != nil || err2 != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			return
+		}
+		post, err := service.RestorePostRevision(database.DB, uint(postID), uint(revisionID))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"post": post})

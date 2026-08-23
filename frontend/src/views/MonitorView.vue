@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import api from '../utils/api'
 import { useAuthStore } from '../stores/auth'
+import { Activity, Cpu, HardDrive, LogIn, RefreshCw } from '@lucide/vue'
 
 interface SystemMetrics {
   cpu_usage_ratio: number
@@ -54,43 +55,44 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section class="max-w-4xl mx-auto">
-    <div class="mb-8 flex items-end justify-between gap-4">
+  <section class="mx-auto max-w-5xl">
+    <div class="surface-header surface mb-4 flex items-center justify-between gap-4">
       <div>
-        <p class="text-sm font-semibold text-brand-600 dark:text-brand-400">Mini exporter</p>
-        <h1 class="mt-1 text-3xl font-bold text-slate-800 dark:text-slate-100">系统监控</h1>
+        <p class="flex items-center gap-2 text-xs font-medium text-brand-600"><Activity :size="15" /> MINI EXPORTER</p>
+        <h1 class="mt-1 page-title">系统监控</h1>
       </div>
       <div v-if="isAuthorized && updatedAt" class="text-right text-xs text-slate-400 dark:text-slate-500">
-        每 5 秒更新<br>{{ updatedAt.toLocaleTimeString() }}
+        <span class="inline-flex items-center gap-1"><RefreshCw :size="13" /> 每 5 秒更新</span><br>{{ updatedAt.toLocaleTimeString() }}
       </div>
     </div>
 
-    <div v-if="!isAuthorized" class="border border-gray-200 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 p-8 text-center">
-      <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">无权限</h2>
+    <div v-if="!isAuthorized" class="surface p-10 text-center">
+      <LogIn :size="32" class="mx-auto mb-3 text-slate-300" />
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">无权限</h2>
       <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">该页面仅限管理员查看，请先登录管理员账号。</p>
-      <router-link to="/login" class="mt-5 inline-flex px-4 py-2 text-sm font-semibold text-white bg-brand-500 hover:bg-brand-600 transition-colors">
+      <router-link to="/login" class="btn-primary mt-5">
         管理员登录
       </router-link>
     </div>
 
     <div v-else>
-      <div v-if="metrics" class="grid gap-5 md:grid-cols-2">
-        <article class="border border-gray-200 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 p-6">
+      <div v-if="metrics" class="grid gap-4 md:grid-cols-2">
+        <article class="surface p-6">
           <div class="flex items-center justify-between gap-4">
-            <h2 class="font-semibold text-slate-600 dark:text-slate-300">CPU 使用率</h2>
+            <h2 class="flex items-center gap-2 font-semibold text-slate-600 dark:text-slate-300"><Cpu :size="18" class="text-brand-500" /> CPU 使用率</h2>
             <span class="text-3xl font-black text-slate-900 dark:text-white">{{ formatPercent(metrics.cpu_usage_ratio) }}</span>
           </div>
-          <div class="mt-6 h-3 overflow-hidden bg-gray-100 dark:bg-white/10">
+          <div class="mt-6 h-2 overflow-hidden bg-slate-100 dark:bg-white/10">
             <div class="h-full bg-brand-500 transition-all duration-500" :style="{ width: formatPercent(metrics.cpu_usage_ratio) }"></div>
           </div>
         </article>
 
-        <article class="border border-gray-200 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 p-6">
+        <article class="surface p-6">
           <div class="flex items-center justify-between gap-4">
-            <h2 class="font-semibold text-slate-600 dark:text-slate-300">内存使用率</h2>
+            <h2 class="flex items-center gap-2 font-semibold text-slate-600 dark:text-slate-300"><HardDrive :size="18" class="text-emerald-500" /> 内存使用率</h2>
             <span class="text-3xl font-black text-slate-900 dark:text-white">{{ formatPercent(metrics.memory_usage_ratio) }}</span>
           </div>
-          <div class="mt-6 h-3 overflow-hidden bg-gray-100 dark:bg-white/10">
+          <div class="mt-6 h-2 overflow-hidden bg-slate-100 dark:bg-white/10">
             <div class="h-full bg-emerald-500 transition-all duration-500" :style="{ width: formatPercent(metrics.memory_usage_ratio) }"></div>
           </div>
           <div class="mt-4 flex justify-between gap-4 text-sm text-slate-500 dark:text-slate-400">
