@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { ArrowLeft, CalendarDays, Clock3, Download, FileUp, PencilLine } from '@lucide/vue'
 import { usePostsStore, type Post } from '../stores/posts'
 import { useAuthStore } from '../stores/auth'
 import api from '../utils/api'
@@ -13,6 +14,7 @@ const store = usePostsStore()
 const auth = useAuthStore()
 const { siteTitle } = useSiteTitle()
 const post = ref<Post | null>(null)
+const loaded = ref(false)
 const isEditing = ref(false)
 const editTitle = ref('')
 const editorContent = ref('')
@@ -22,13 +24,22 @@ const exporting = ref(false)
 const actionError = ref('')
 const markdownInput = ref<HTMLInputElement | null>(null)
 const readingProgress = ref(0)
+const readingMinutes = computed(() => {
+  if (!post.value) return 1
+  const text = post.value.content_html.replace(/<[^>]+>/g, '').replace(/\s+/g, '')
+  return Math.max(1, Math.ceil(text.length / 500))
+})
 
 onMounted(async () => {
 	window.addEventListener('scroll', updateReadingProgress, { passive: true })
-  post.value = await store.fetchPost(route.params.slug as string)
-  if (post.value) {
-    document.title = `${post.value.title} | ${siteTitle.value}`
-    setMetaDescription(post.value.content_html)
+  try {
+    post.value = await store.fetchPost(route.params.slug as string)
+    if (post.value) {
+      document.title = `${post.value.title} | ${siteTitle.value}`
+      setMetaDescription(post.value.content_html)
+    }
+  } finally {
+    loaded.value = true
   }
 })
 
@@ -148,15 +159,21 @@ async function exportMarkdown() {
 </script>
 
 <template>
-  <div class="fixed left-0 top-16 z-50 h-0.5 bg-brand-500 transition-[width]" :style="{ width: `${readingProgress}%` }" aria-hidden="true"></div>
-  <div v-if="!post" class="flex justify-center py-20">
+  <div class="fixed left-0 top-0 z-[60] h-0.5 bg-brand-500 transition-[width]" :style="{ width: `${readingProgress}%` }" aria-hidden="true"></div>
+  <div v-if="!loaded" class="flex justify-center py-20">
     <div class="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent"></div>
   </div>
 
-  <div v-else class="mx-auto max-w-6xl">
-    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-      <router-link to="/posts" class="inline-flex items-center gap-1 text-sm text-slate-400 transition-colors hover:text-brand-600 dark:text-slate-500 dark:hover:text-brand-400">
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+  <div v-else-if="!post" class="surface mx-auto max-w-3xl px-6 py-20 text-center">
+    <h1 class="text-xl font-semibold text-slate-900 dark:text-white">文章不存在</h1>
+    <p class="mt-2 text-sm text-slate-400">它可能已被删除，或者链接地址有误。</p>
+    <router-link to="/posts" class="btn-primary mt-5"><ArrowLeft :size="16" />返回文章列表</router-link>
+  </div>
+
+  <div v-else>
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <router-link to="/posts" class="inline-flex items-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-brand-600 dark:text-slate-400">
+        <ArrowLeft :size="16" />
         返回文章列表
       </router-link>
 
@@ -166,10 +183,10 @@ async function exportMarkdown() {
           v-if="auth.isAuthenticated && !isEditing"
           type="button"
           title="上传 Markdown 覆盖当前文章"
-          class="inline-flex h-9 items-center gap-2 border border-gray-200 bg-white px-3 text-sm font-medium text-slate-600 transition-colors hover:border-brand-300 hover:text-brand-600 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300"
+          class="btn-secondary h-9 px-3"
           @click="chooseMarkdownFile"
         >
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16V4m0 0L8 8m4-4l4 4M5 20h14"/></svg>
+          <FileUp :size="16" />
           上传 MD
         </button>
         <button
@@ -177,20 +194,20 @@ async function exportMarkdown() {
           type="button"
           :disabled="editorLoading"
           title="在线编辑"
-          class="inline-flex h-9 items-center gap-2 border border-gray-200 bg-white px-3 text-sm font-medium text-slate-600 transition-colors hover:border-brand-300 hover:text-brand-600 disabled:opacity-50 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300"
+          class="btn-secondary h-9 px-3"
           @click="startEditing"
         >
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 3.487a2.25 2.25 0 113.182 3.182L8.25 18.463 3 20l1.537-5.25L16.862 3.487z"/></svg>
+          <PencilLine :size="16" />
           {{ editorLoading ? '加载中' : '编辑' }}
         </button>
         <button
           type="button"
           :disabled="exporting"
           title="导出 Markdown"
-          class="inline-flex h-9 items-center gap-2 bg-brand-500 px-3 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:opacity-50"
+          class="btn-primary h-9 px-3"
           @click="exportMarkdown"
         >
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+          <Download :size="16" />
           {{ exporting ? '导出中' : '导出' }}
         </button>
       </div>
@@ -200,9 +217,9 @@ async function exportMarkdown() {
       {{ actionError }}
     </p>
 
-    <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_14rem] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_15rem] xl:gap-8">
-      <article class="min-w-0 border border-gray-100 bg-white p-6 shadow-sm md:p-10 dark:border-white/5 dark:bg-slate-900">
-        <header class="mb-8 border-b border-gray-100 pb-8 dark:border-white/10">
+    <div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+      <article class="surface min-w-0 px-5 py-7 sm:px-8 md:px-12 md:py-10">
+        <header class="mb-8 border-b border-slate-100 pb-8 dark:border-white/10">
           <img v-if="post.cover_image" :src="post.cover_image" :alt="post.title" class="mb-6 max-h-80 w-full object-cover" />
           <div v-if="isEditing">
             <label for="post-title-editor" class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">文章标题</label>
@@ -210,13 +227,14 @@ async function exportMarkdown() {
               id="post-title-editor"
               v-model="editTitle"
               type="text"
-              class="w-full border border-gray-200 bg-gray-50 px-4 py-3 text-2xl font-bold text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-white/10 dark:bg-slate-950 dark:text-slate-100"
+              class="text-input py-3 text-2xl font-bold"
             />
           </div>
-          <h1 v-else class="mb-4 text-3xl font-black leading-tight text-slate-800 md:text-4xl dark:text-slate-100">{{ post.title }}</h1>
-          <time class="mt-4 block text-sm text-slate-400 dark:text-slate-500">
-            {{ new Date(post.created_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }) }}
-          </time>
+          <h1 v-else class="mb-4 text-3xl font-bold leading-tight text-slate-900 md:text-4xl dark:text-white">{{ post.title }}</h1>
+          <div class="flex flex-wrap items-center gap-4 text-sm text-slate-400 dark:text-slate-500">
+            <time class="inline-flex items-center gap-1.5"><CalendarDays :size="15" />{{ new Date(post.created_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }) }}</time>
+            <span class="inline-flex items-center gap-1.5"><Clock3 :size="15" />阅读约 {{ readingMinutes }} 分钟</span>
+          </div>
           <div v-if="post.tags.length" class="mt-4 flex flex-wrap gap-2">
             <router-link v-for="tag in post.tags" :key="tag.id" :to="`/posts?tag=${tag.name}`" class="tag-pill">#{{ tag.name }}</router-link>
           </div>
@@ -231,7 +249,7 @@ async function exportMarkdown() {
             id="post-markdown-editor"
             v-model="editorContent"
             spellcheck="false"
-            class="min-h-[60vh] w-full resize-y border border-gray-200 bg-gray-50 p-4 font-mono text-sm leading-6 text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-white/10 dark:bg-slate-950 dark:text-slate-200"
+            class="min-h-[60vh] w-full resize-y border border-slate-200 bg-slate-50 p-4 font-mono text-sm leading-6 text-slate-800 outline-none focus:border-brand-500 dark:border-white/10 dark:bg-[#11151b] dark:text-slate-200"
           ></textarea>
           <div class="mt-4 flex justify-end gap-2">
             <button type="button" :disabled="saving" class="h-10 px-4 text-sm font-medium text-slate-500 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:hover:bg-white/5" @click="cancelEditing">取消</button>
@@ -252,12 +270,8 @@ async function exportMarkdown() {
         </div>
       </article>
 
-      <aside
-        v-if="!isEditing"
-        class="fixed top-24 z-40 hidden w-56 lg:block xl:w-60"
-        style="right: max(1rem, calc((100vw - 72rem) / 2));"
-      >
-        <div class="max-h-[calc(100vh-7rem)] overflow-y-auto rounded-lg border border-gray-200/70 bg-white/85 p-5 shadow-lg shadow-slate-900/10 backdrop-blur-md dark:border-white/10 dark:bg-slate-900/85 dark:shadow-black/20">
+      <aside v-if="!isEditing" class="sticky top-[116px] hidden lg:block">
+        <div class="surface max-h-[calc(100vh-8rem)] overflow-y-auto p-5">
           <TOCSidebar :toc-json="post.toc" />
         </div>
       </aside>

@@ -28,11 +28,11 @@ onMounted(() => { loadPosts(); loadQuotes() })
 
 async function loadPosts() {
   loading.value = true
-  try { const r = await api.get('/admin/posts'); posts.value = r.data.posts }
+  try { const r = await api.get('/admin/posts'); posts.value = r.data.posts ?? [] }
   finally { loading.value = false }
 }
 async function loadQuotes() {
-  try { const r = await api.get('/admin/quotes'); quotes.value = r.data.quotes }
+  try { const r = await api.get('/admin/quotes'); quotes.value = r.data.quotes ?? [] }
   catch { quotes.value = [] }
 }
 async function addQuote() {
@@ -178,11 +178,11 @@ async function uploadAvatar() {
 </script>
 
 <template>
-  <div>
+  <div class="admin-shell">
     <div class="flex items-center justify-between mb-8">
       <div>
-        <h1 class="text-3xl font-black text-slate-800 dark:text-slate-100 mb-1">Admin</h1>
-        <p class="text-sm text-slate-400 dark:text-slate-500">Manage your blog</p>
+        <h1 class="page-title">创作中心</h1>
+        <p class="mt-1 text-sm text-slate-400 dark:text-slate-500">管理文章、站点外观与数据</p>
       </div>
       <div class="flex items-center gap-3">
         <button @click="downloadBackup" :disabled="backupLoading" class="text-sm font-medium text-brand-600 disabled:opacity-50 dark:text-brand-400">{{ backupLoading ? 'Preparing...' : 'Download backup' }}</button>

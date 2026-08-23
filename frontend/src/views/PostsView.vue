@@ -5,6 +5,7 @@ import { usePostsStore } from '../stores/posts'
 import api from '../utils/api'
 import PostCard from '../components/PostCard.vue'
 import EmptyState from '../components/EmptyState.vue'
+import { ChevronLeft, ChevronRight, Hash } from '@lucide/vue'
 
 const route = useRoute()
 const store = usePostsStore()
@@ -16,7 +17,7 @@ onMounted(async () => {
   store.fetchPosts(1, (route.query.tag as string) || '')
   try {
     const response = await api.get('/tags')
-    allTags.value = response.data.tags
+    allTags.value = response.data.tags ?? []
   } catch {}
 })
 
@@ -26,56 +27,37 @@ watch(() => route.query, () => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-5xl">
-    <div class="mb-6 flex items-end justify-between gap-4">
-      <div>
-        <p class="mb-1 text-sm font-medium text-slate-400 dark:text-slate-500">文章归档</p>
-        <h1 class="text-3xl font-black text-slate-800 dark:text-slate-100">{{ route.query.tag ? `#${route.query.tag}` : '全部文章' }}</h1>
+  <div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+    <section class="surface min-w-0 overflow-hidden">
+      <header class="surface-header flex items-center justify-between gap-4">
+        <div>
+          <h1 class="page-title">{{ route.query.tag ? `# ${route.query.tag}` : '全部文章' }}</h1>
+          <p class="mt-1 text-xs text-slate-400">共 {{ store.total }} 篇内容</p>
+        </div>
+        <router-link to="/search" class="text-sm text-brand-600 hover:text-brand-700">搜索文章</router-link>
+      </header>
+
+      <div v-if="store.loading" class="divide-y divide-slate-100 dark:divide-white/10">
+        <div v-for="i in 5" :key="i" class="h-36 animate-pulse bg-slate-50 dark:bg-white/[0.02]"></div>
       </div>
-      <span class="text-sm text-slate-400 dark:text-slate-500">{{ store.total }} 篇</span>
-    </div>
+      <EmptyState v-else-if="!store.posts.length" icon="sad" title="没有找到文章" description="换个标签试试。" />
+      <div v-else><PostCard v-for="post in store.posts" :key="post.id" :post="post" compact /></div>
 
-    <div class="mb-6 flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
-      <button
-        class="shrink-0 px-3 py-1.5 text-sm font-medium transition-colors"
-        :class="!route.query.tag ? 'bg-brand-500 text-white' : 'bg-white text-slate-500 hover:text-brand-600 dark:bg-slate-900 dark:text-slate-400'"
-        @click="$router.push('/posts')"
-      >
-        全部
-      </button>
-      <button
-        v-for="tag in allTags"
-        :key="tag.name"
-        class="shrink-0 px-3 py-1.5 text-sm font-medium transition-colors"
-        :class="route.query.tag === tag.name ? 'bg-brand-500 text-white' : 'bg-white text-slate-500 hover:text-brand-600 dark:bg-slate-900 dark:text-slate-400'"
-        @click="$router.push({ path: '/posts', query: { tag: tag.name } })"
-      >
-        {{ tag.name }} · {{ tag.count }}
-      </button>
-    </div>
-
-    <div v-if="store.loading" class="divide-y divide-gray-200 border-y border-gray-200 dark:divide-white/10 dark:border-white/10">
-      <div v-for="i in 5" :key="i" class="h-32 animate-pulse bg-gray-100/70 dark:bg-white/5"></div>
-    </div>
-
-    <EmptyState v-else-if="!store.posts.length" icon="sad" title="没有找到文章" description="换个标签试试。" />
-
-    <template v-else>
-      <div>
-        <PostCard v-for="post in store.posts" :key="post.id" :post="post" compact />
+      <div v-if="totalPages > 1" class="flex items-center justify-center gap-1 border-t border-slate-100 p-5 dark:border-white/10">
+        <button class="icon-button" :disabled="currentPage <= 1" @click="$router.push({ query: { ...route.query, page: currentPage - 1 } })"><ChevronLeft :size="17" /></button>
+        <button v-for="page in totalPages" :key="page" class="h-9 min-w-9 px-2 text-sm"
+          :class="page === currentPage ? 'bg-brand-500 text-white' : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5'"
+          @click="$router.push({ query: { ...route.query, page } })">{{ page }}</button>
+        <button class="icon-button" :disabled="currentPage >= totalPages" @click="$router.push({ query: { ...route.query, page: currentPage + 1 } })"><ChevronRight :size="17" /></button>
       </div>
+    </section>
 
-      <div v-if="totalPages > 1" class="mt-10 flex justify-center gap-2">
-        <button
-          v-for="page in totalPages"
-          :key="page"
-          class="h-10 w-10 text-sm font-semibold transition-colors"
-          :class="page === currentPage ? 'bg-brand-500 text-white' : 'bg-white text-slate-600 hover:text-brand-600 dark:bg-slate-900 dark:text-slate-300'"
-          @click="$router.push({ query: { ...route.query, page } })"
-        >
-          {{ page }}
-        </button>
+    <aside class="surface p-5 lg:sticky lg:top-[116px]">
+      <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white"><Hash :size="16" class="text-brand-500" /> 内容分类</h2>
+      <div class="space-y-1">
+        <button class="flex w-full items-center justify-between px-3 py-2 text-left text-sm" :class="!route.query.tag ? 'bg-brand-50 text-brand-600 dark:bg-brand-900/20' : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/5'" @click="$router.push('/posts')"><span>全部</span><span>{{ store.total }}</span></button>
+        <button v-for="tag in allTags" :key="tag.name" class="flex w-full items-center justify-between px-3 py-2 text-left text-sm" :class="route.query.tag === tag.name ? 'bg-brand-50 text-brand-600 dark:bg-brand-900/20' : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/5'" @click="$router.push({ path: '/posts', query: { tag: tag.name } })"><span class="truncate">{{ tag.name }}</span><span>{{ tag.count }}</span></button>
       </div>
-    </template>
+    </aside>
   </div>
 </template>
