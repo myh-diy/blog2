@@ -91,6 +91,8 @@ docker compose logs -f blog
 - [前端开发说明](docs/frontend.md)
 - [后端与 API 说明](docs/backend.md)
 - [配置说明](CONFIGURATION.md)
+- [阿里云 HTTPS 部署](docs/https-deployment.md)
+- [HTTPS 工作流程说明](docs/https-flow.md)
 - [Prometheus 文本格式学习笔记](docs/prometheus-text-format-guide.md)
 
 ## 发布流程
