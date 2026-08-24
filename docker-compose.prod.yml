@@ -1,0 +1,51 @@
+services:
+  blog:
+    image: ghcr.io/myh-diy/blog:latest
+    expose:
+      - "8080"
+      - "9101"
+    volumes:
+      - blog-uploads:/app/uploads
+      - blog-data:/app/data
+    environment:
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env.production}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env.production}
+      PUBLIC_URL: https://${DOMAIN:?set DOMAIN in .env.production}
+      GIN_MODE: release
+      EXPORTER_METRICS_URL: http://127.0.0.1:9101/metrics
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env.production}
+      NGINX_TEMPLATE: ${NGINX_TEMPLATE:-https.conf.template}
+    volumes:
+      - ./deploy/nginx:/etc/blog-nginx:ro
+      - ./deploy/certbot/www:/var/www/certbot:ro
+      - ./deploy/certbot/conf:/etc/letsencrypt:ro
+    command: ["/bin/sh", "/etc/blog-nginx/start.sh"]
+    depends_on:
+      blog:
+        condition: service_healthy
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot:v5.7.0
+    volumes:
+      - ./deploy/certbot/www:/var/www/certbot
+      - ./deploy/certbot/conf:/etc/letsencrypt
+
+volumes:
+  blog-uploads:
+  blog-data:
